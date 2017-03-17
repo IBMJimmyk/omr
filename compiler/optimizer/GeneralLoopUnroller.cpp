@@ -513,6 +513,11 @@ void TR_LoopUnroller::modifyBranchTree(TR_RegionStructure *loop,
    int32_t  adjustment   = getLoopStride() * (1+_unrollCount) +
       (isIncreasingLoop() ? -1 : 1);
 
+   if (_unrollKind == SPMDKernel && isIncreasingLoop())
+      {
+      adjustment = adjustment < 1000 ? 1000 : adjustment;
+      }
+
    bool const_overflow = false;
 
    // check for overflow if upper bound is constant
