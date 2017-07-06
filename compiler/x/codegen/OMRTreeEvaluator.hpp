@@ -287,6 +287,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
 
    // For ILOpCode that can be translated to single SSE/AVX instructions
    static TR::Register *FloatingPointAndVectorBinaryArithmeticEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *VectorLogicalEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    // SIMD evaluators
    static TR::Register *SIMDRegLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -294,6 +295,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *SIMDloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *SIMDstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *SIMDsplatsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *SIMDgetvelemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bztestnsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);

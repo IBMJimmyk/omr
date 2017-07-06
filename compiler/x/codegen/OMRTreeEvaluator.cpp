@@ -5881,21 +5881,21 @@ enum BinaryArithmeticOps : uint32_t
 static const TR_X86OpCodes BinaryArithmeticOpCodes[TR::NumOMRTypes][NumBinaryArithmeticOps] =
    {
    //  Invalid,       Add,         Sub,       Mul,         Div
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // NoType
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Int8
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Int16
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Int32
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Int64
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Float
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Double
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Address
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // VectorInt8
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // VectorInt16
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // VectorInt32
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // VectorInt64
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // VectorFloat
-   { BADIA32Op, ADDPDRegReg, BADIA32Op, MULPDRegReg, BADIA32Op }, // VectorDouble
-   { BADIA32Op, BADIA32Op,   BADIA32Op, BADIA32Op,   BADIA32Op }, // Aggregate
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // NoType
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int8
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int16
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int32
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int64
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Float
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Double
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Address
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // VectorInt8
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // VectorInt16
+   { BADIA32Op, PADDD,       PSUBDRegReg, PMULLD,       BADIA32Op   }, // VectorInt32
+   { BADIA32Op, PADDQRegReg, PSUBQRegReg, BADIA32Op,    BADIA32Op   }, // VectorInt64
+   { BADIA32Op, ADDPSRegReg, SUBPSRegReg, MULPSRegReg,  DIVPSRegReg }, // VectorFloat
+   { BADIA32Op, ADDPDRegReg, SUBPDRegReg, MULPDRegReg,  DIVPDRegReg }, // VectorDouble
+   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Aggregate
    };
 // For ILOpCode that can be translated to single SSE/AVX instructions
 TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEvaluator(TR::Node* node, TR::CodeGenerator* cg)
@@ -5906,8 +5906,14 @@ TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEva
       case TR::vadd:
          arithmetic = BinaryArithmeticAdd;
          break;
+      case TR::vsub:
+         arithmetic = BinaryArithmeticSub;
+         break;
       case TR::vmul:
          arithmetic = BinaryArithmeticMul;
+         break;
+      case TR::vdiv:
+         arithmetic = BinaryArithmeticDiv;
          break;
       default:
          TR_ASSERT(false, "Unsupported OpCode");
@@ -5929,3 +5935,38 @@ TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEva
    cg->decReferenceCount(operandNode1);
    return resultReg;
    }
+
+TR::Register* OMR::X86::TreeEvaluator::VectorLogicalEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR_X86OpCodes opCode = BADIA32Op;
+   switch (node->getOpCodeValue())
+      {
+      case TR::vand:
+         opCode = PANDRegReg;
+         break;
+      case TR::vor:
+         opCode = PORRegReg;
+         break;
+      case TR::vxor:
+         opCode = PXORRegReg;
+         break;
+      default:
+         TR_ASSERT(false, "Unsupported OpCode");
+      }
+   TR::Node* operandNode0 = node->getChild(0);
+   TR::Node* operandNode1 = node->getChild(1);
+   TR::Register* operandReg0 = cg->evaluate(operandNode0);
+   TR::Register* operandReg1 = cg->evaluate(operandNode1);
+
+   TR::Register* resultReg = cg->allocateRegister(operandReg0->getKind());
+   generateRegRegInstruction(MOVDQURegReg, node, resultReg, operandReg0, cg);
+
+   TR_ASSERT(opCode != BADIA32Op, "VectorLogicalEvaluator: unsupported data type or arithmetic.");
+   generateRegRegInstruction(opCode, node, resultReg, operandReg1, cg);
+
+   node->setRegister(resultReg);
+   cg->decReferenceCount(operandNode0);
+   cg->decReferenceCount(operandNode1);
+   return resultReg;
+   }
+
