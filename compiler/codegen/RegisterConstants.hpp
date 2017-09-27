@@ -44,7 +44,8 @@ enum TR_RegisterKinds
    TR_HPR           = 9,   // High word register for zGryphon
    TR_GPRL          = 10,  // Low word register for zGryphon
    TR_AR            = 11,  // access registers
-   LastRegisterKind = TR_AR,
+   TR_VRF256        = 12,
+   LastRegisterKind = TR_VRF256,
    NumRegisterKinds = LastRegisterKind+1,
 
    TR_NoRegister    = LastRegisterKind+1,
@@ -61,7 +62,8 @@ enum TR_RegisterKinds
    TR_SSR_Mask    = TO_KIND_MASK(TR_SSR),
    TR_HPR_Mask    = TO_KIND_MASK(TR_HPR),
    TR_GPRL_Mask   = TO_KIND_MASK(TR_GPRL),
-   TR_AR_Mask     = TO_KIND_MASK(TR_AR)
+   TR_AR_Mask     = TO_KIND_MASK(TR_AR),
+   TR_VRF256_Mask = TO_KIND_MASK(TR_VRF256)
    };
 
 enum TR_RegisterSizes
@@ -74,7 +76,8 @@ enum TR_RegisterSizes
    TR_QuadWordReg    = 4,
    TR_FloatReg       = 5,
    TR_DoubleReg      = 6,
-   TR_VectorReg      = 7
+   TR_VectorReg      = 7,
+   TR_DoubleQuadWordReg = 8
    };
 
 enum TR_RematerializableTypes

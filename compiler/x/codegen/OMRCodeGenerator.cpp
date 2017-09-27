@@ -1602,7 +1602,7 @@ void OMR::X86::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssig
    LexicalTimer pt2("GP register assignment", self()->comp()->phaseTimer());
    // Assign GPRs and XMMRs in a backward pass
    //
-   kindsToAssign = TR_RegisterKinds(kindsToAssign & (TR_GPR_Mask | TR_FPR_Mask | TR_VRF_Mask));
+   kindsToAssign = TR_RegisterKinds(kindsToAssign & (TR_GPR_Mask | TR_FPR_Mask | TR_VRF_Mask | TR_VRF256_Mask));
    if (kindsToAssign)
       {
       self()->getVMThreadRegister()->setFutureUseCount(self()->getVMThreadRegister()->getTotalUseCount());

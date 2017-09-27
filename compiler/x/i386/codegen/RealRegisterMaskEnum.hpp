@@ -68,3 +68,15 @@
    xmm6Mask          = 0x00000040 << XMMRMaskOffset,
    xmm7Mask          = 0x00000080 << XMMRMaskOffset,
    AvailableXMMRMask = 0x000000FF << XMMRMaskOffset,
+
+   // YMMR
+   //
+   ymm0Mask          = xmm0Mask,
+   ymm1Mask          = xmm1Mask,
+   ymm2Mask          = xmm2Mask,
+   ymm3Mask          = xmm3Mask,
+   ymm4Mask          = xmm4Mask,
+   ymm5Mask          = xmm5Mask,
+   ymm6Mask          = xmm6Mask,
+   ymm7Mask          = xmm7Mask,
+   AvailableYMMRMask = AvailableXMMRMask,
