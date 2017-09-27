@@ -258,6 +258,7 @@ OMR::CodeGenerator::CodeGenerator() :
      _spill4FreeList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _spill8FreeList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _spill16FreeList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
+     _spill32FreeList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _internalPointerSpillFreeList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _spilledRegisterList(NULL),
      _firstTimeLiveOOLRegisterList(NULL),

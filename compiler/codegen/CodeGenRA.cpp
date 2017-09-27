@@ -482,7 +482,7 @@ OMR::CodeGenerator::allocateSpill(bool containsCollectedReference, int32_t *offs
 TR_BackingStore *
 OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedReference, int32_t *offset, bool reuse)
    {
-   TR_ASSERT(dataSize <= 16, "assertion failure");
+   TR_ASSERT(dataSize <= 32, "assertion failure");
    TR_ASSERT(!containsCollectedReference || (dataSize == TR::Compiler->om.sizeofReferenceAddress()), "assertion failure");
 
    if (self()->getTraceRAOption(TR_TraceRASpillTemps))
@@ -505,6 +505,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
    //
    bool try8ByteSpills = (dataSize < 16) && ((TR::Compiler->om.sizeofReferenceAddress() == 8) || !containsCollectedReference);
    bool try16ByteSpills = (dataSize == 16);
+   bool try32ByteSpills = (dataSize == 32);
 
    if(reuse)
      {
@@ -522,6 +523,11 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
      {
        spill = self()->getSpill16FreeList().front();
        self()->getSpill16FreeList().pop_front();
+     }
+     if (!spill && try32ByteSpills && !self()->getSpill32FreeList().empty())
+     {
+       spill = self()->getSpill32FreeList().front();
+       self()->getSpill32FreeList().pop_front();
      }
      if (
          (spill && self()->getTraceRAOption(TR_TraceRASpillTemps) && !performTransformation(self()->comp(), "O^O SPILL TEMPS: Reuse spill temp %s\n", self()->getDebug()->getName(spill->getSymbolReference()))))
@@ -553,7 +559,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
       const int MIN_SPILL_SIZE = (self()->comp()->getOption(TR_ForceLargeRAMoves)) ? 8 : TR::Compiler->om.sizeofReferenceAddress();
       int32_t slot;
       spillSize = std::max(dataSize, MIN_SPILL_SIZE);
-      TR_ASSERT(4 <= spillSize && spillSize <= 16, "Spill temps should be between 4 and 16 bytes");
+      TR_ASSERT(4 <= spillSize && spillSize <= 32, "Spill temps should be between 4 and 32 bytes");
       spillSymbol = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::NoType,spillSize);
       spillSymbol->setSpillTempAuto();
       self()->comp()->getMethodSymbol()->addAutomatic(spillSymbol);
@@ -605,9 +611,9 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
 void
 OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t offset)
    {
-   TR_ASSERT(1 <= dataSize && dataSize <= 16, "assertion failure");
+   TR_ASSERT(1 <= dataSize && dataSize <= 32, "assertion failure");
    TR_ASSERT(offset == 0 || offset == 4, "assertion failure");
-   TR_ASSERT(dataSize + offset <= 16, "assertion failure");
+   TR_ASSERT(dataSize + offset <= 32, "assertion failure");
 
    if (self()->getTraceRAOption(TR_TraceRASpillTemps))
       {
@@ -708,6 +714,12 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
             if (self()->getTraceRAOption(TR_TraceRASpillTemps))
                traceMsg(self()->comp(), "\n -> added to spill16FreeList");
             }
+         else if (spill->getSymbolReference()->getSymbol()->getSize() == 32)
+            {
+            _spill32FreeList.push_front(spill);
+            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+               traceMsg(self()->comp(), "\n -> added to spill32FreeList");
+            }
          }
       }
    }
@@ -720,6 +732,7 @@ OMR::CodeGenerator::jettisonAllSpills()
    _spill4FreeList.clear();
    _spill8FreeList.clear();
    _spill16FreeList.clear();
+   _spill32FreeList.clear();
    _internalPointerSpillFreeList.clear();
    }
 

@@ -299,6 +299,10 @@ OMR::X86::Machine::findBestFreeGPRegister(TR::Instruction   *currentInstruction,
          first = TR::RealRegister::FirstXMMR;
          last  = TR::RealRegister::LastXMMR;
          break;
+      case TR_DoubleQuadWordReg:
+         first = TR::RealRegister::FirstYMMR;
+         last  = TR::RealRegister::LastYMMR;
+         break;
       default:
          TR_ASSERT(0, "unknown register size requested\n");
       }
@@ -480,6 +484,10 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
       case TR_QuadWordReg:
          first = TR::RealRegister::FirstXMMR;
          last  = TR::RealRegister::LastXMMR;
+         break;
+      case TR_DoubleQuadWordReg:
+         first = TR::RealRegister::FirstYMMR;
+         last  = TR::RealRegister::LastYMMR;
          break;
       default:
          TR_ASSERT(0, "unknown register size requested\n");

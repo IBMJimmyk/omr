@@ -1011,6 +1011,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::list<TR_BackingStore*>& getSpill4FreeList() {return _spill4FreeList;}
    TR::list<TR_BackingStore*>& getSpill8FreeList() {return _spill8FreeList;}
    TR::list<TR_BackingStore*>& getSpill16FreeList() {return _spill16FreeList;}
+   TR::list<TR_BackingStore*>& getSpill32FreeList() {return _spill32FreeList;}
    TR::list<TR_BackingStore*>& getInternalPointerSpillFreeList() {return _internalPointerSpillFreeList;}
    TR::list<TR_BackingStore*>& getCollectedSpillList() {return _collectedSpillList;}
    TR::list<TR_BackingStore*>& getAllSpillList() {return _allSpillList;}
@@ -1888,6 +1889,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::list<TR_BackingStore*> _spill4FreeList;
    TR::list<TR_BackingStore*> _spill8FreeList;
    TR::list<TR_BackingStore*> _spill16FreeList;
+   TR::list<TR_BackingStore*> _spill32FreeList;
    TR::list<TR_BackingStore*> _internalPointerSpillFreeList;
    TR::list<TR_BackingStore*> _collectedSpillList;
    TR::list<TR_BackingStore*> _allSpillList;

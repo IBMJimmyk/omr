@@ -975,10 +975,12 @@ void TR::X86RegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
 
       TR_RegisterSizes firstRequestedRegSize = getOpCode().hasByteTarget() ? TR_ByteReg :
                                                getOpCode().hasXMMTarget()  ? TR_QuadWordReg :
+                                               getOpCode().hasYMMTarget()  ? TR_DoubleQuadWordReg :
                                                                              TR_WordReg;
 
       TR_RegisterSizes secondRequestedRegSize = getOpCode().hasByteSource() ? TR_ByteReg :
                                                 getOpCode().hasXMMSource()  ? TR_QuadWordReg :
+                                                getOpCode().hasYMMSource()  ? TR_DoubleQuadWordReg :
                                                                               TR_WordReg;
 
       // Ensure both source and target registers have the
@@ -2184,6 +2186,10 @@ void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
             {
             requestedRegSize = TR_QuadWordReg;
             }
+         else if (getOpCode().hasYMMSource())
+            {
+            requestedRegSize = TR_DoubleQuadWordReg;
+            }
 
          if (assignedRegister == NULL)
             {
@@ -2668,6 +2674,10 @@ void TR::X86RegMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
       else if (getOpCode().hasXMMTarget())
          {
          requestedRegSize = TR_QuadWordReg;
+         }
+      else if (getOpCode().hasYMMTarget())
+         {
+         requestedRegSize = TR_DoubleQuadWordReg;
          }
 
       if (getDependencyConditions())
