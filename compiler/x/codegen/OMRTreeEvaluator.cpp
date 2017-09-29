@@ -5894,7 +5894,7 @@ static const TR_X86OpCodes BinaryArithmeticOpCodes[TR::NumOMRTypes][NumBinaryAri
    { BADIA32Op, PADDD,       PSUBDRegReg, PMULLD,       BADIA32Op   }, // VectorInt32
    { BADIA32Op, PADDQRegReg, PSUBQRegReg, BADIA32Op,    BADIA32Op   }, // VectorInt64
    { BADIA32Op, ADDPSRegReg, SUBPSRegReg, MULPSRegReg,  DIVPSRegReg }, // VectorFloat
-   { BADIA32Op, ADDPDRegReg, SUBPDRegReg, MULPDRegReg,  DIVPDRegReg }, // VectorDouble
+   { BADIA32Op, ADDPD256RegReg, SUBPD256RegReg, MULPD256RegReg,  DIVPD256RegReg }, // VectorDouble
    { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Aggregate
    };
 // For ILOpCode that can be translated to single SSE/AVX instructions
@@ -5924,7 +5924,7 @@ TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEva
    TR::Register* operandReg1 = cg->evaluate(operandNode1);
 
    TR::Register* resultReg = cg->allocateRegister(operandReg0->getKind());
-   generateRegRegInstruction(MOVDQURegReg, node, resultReg, operandReg0, cg);
+   generateRegRegInstruction(MOVDQU256RegReg, node, resultReg, operandReg0, cg);
 
    TR_X86OpCodes opCode = BinaryArithmeticOpCodes[node->getDataType()][arithmetic];
    TR_ASSERT(opCode != BADIA32Op, "FloatingPointAndVectorBinaryArithmeticEvaluator: unsupported data type or arithmetic.");

@@ -229,6 +229,33 @@ class OMR_EXTENSIBLE RealRegister : public OMR::X86::RealRegister
          }
       }
 
+   static RegMask ymmrMask(RegNum idx)
+      {
+      switch(idx)
+         {
+         case OMR::RealRegister::NoReg:
+            return OMR::RealRegister::noRegMask;
+         case OMR::RealRegister::ymm0:
+            return OMR::RealRegister::ymm0Mask;
+         case OMR::RealRegister::ymm1:
+            return OMR::RealRegister::ymm1Mask;
+         case OMR::RealRegister::ymm2:
+            return OMR::RealRegister::ymm2Mask;
+         case OMR::RealRegister::ymm3:
+            return OMR::RealRegister::ymm3Mask;
+         case OMR::RealRegister::ymm4:
+            return OMR::RealRegister::ymm4Mask;
+         case OMR::RealRegister::ymm5:
+            return OMR::RealRegister::ymm5Mask;
+         case OMR::RealRegister::ymm6:
+            return OMR::RealRegister::ymm6Mask;
+         case OMR::RealRegister::ymm7:
+            return OMR::RealRegister::ymm7Mask;
+         default:
+            TR_ASSERT(false, "ymmrMask is only valid for registers ymm0 to ymm7");
+            return OMR::RealRegister::noRegMask;
+         }
+      }
 
    void setRegisterNumber() { TR_ASSERT(0, "X86 RealRegister doesn't have setRegisterNumber() implementation"); }
 

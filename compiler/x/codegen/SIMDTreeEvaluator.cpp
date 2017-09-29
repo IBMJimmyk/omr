@@ -54,7 +54,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDRegLoadEvaluator(TR::Node* node, TR::
    TR::Register* globalReg = node->getRegister();
    if (!globalReg)
       {
-      globalReg = cg->allocateRegister(TR_VRF);
+      globalReg = cg->allocateRegister(TR_VRF256);
       node->setRegister(globalReg);
       }
    return globalReg;
@@ -73,13 +73,13 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDloadEvaluator(TR::Node* node, TR::Cod
    {
    TR::MemoryReference* tempMR = generateX86MemoryReference(node, cg);
    tempMR = ConvertToPatchableMemoryReference(tempMR, node, cg);
-   TR::Register* resultReg = cg->allocateRegister(TR_VRF);
+   TR::Register* resultReg = cg->allocateRegister(TR_VRF256);
 
    TR_X86OpCodes opCode = BADIA32Op;
    switch (node->getSize())
       {
       case 16:
-         opCode = MOVDQURegMem;
+         opCode = MOVDQU256RegMem;
          break;
       default:
          if (cg->comp()->getOption(TR_TraceCG))
@@ -107,7 +107,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDstoreEvaluator(TR::Node* node, TR::Co
    switch (node->getSize())
       {
       case 16:
-         opCode = MOVDQUMemReg;
+         opCode = MOVDQU256MemReg;
          break;
       default:
          if (cg->comp()->getOption(TR_TraceCG))
@@ -130,10 +130,10 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
    TR::Node* childNode = node->getChild(0);
    TR::Register* childReg = cg->evaluate(childNode);
 
-   TR::Register* resultReg = cg->allocateRegister(TR_VRF);
+   TR::Register* resultReg = cg->allocateRegister(TR_VRF256);
    switch (node->getDataType())
       {
-      case TR::VectorInt32:
+      /*case TR::VectorInt32:
          generateRegRegInstruction(MOVDRegReg4, node, resultReg, childReg, cg);
          generateRegRegImmInstruction(PSHUFDRegRegImm1, node, resultReg, resultReg, 0x00, cg); // 00 00 00 00 shuffle xxxA to AAAA
          break;
@@ -155,9 +155,10 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
          break;
       case TR::VectorFloat:
          generateRegRegImmInstruction(PSHUFDRegRegImm1, node, resultReg, childReg, 0x00, cg); // 00 00 00 00 shuffle xxxA to AAAA
-         break;
+         break;*/
       case TR::VectorDouble:
-         generateRegRegImmInstruction(PSHUFDRegRegImm1, node, resultReg, childReg, 0x44, cg); // 01 00 01 00 shuffle xxBA to BABA
+         generateRegRegImmInstruction(VPERMQRegRegImm1, node, resultReg, childReg, 0x00, cg); // 01 00 01 00 shuffle xxBA to BABA
+         //generateRegRegImmInstruction(PSHUFDRegRegImm1, node, resultReg, childReg, 0x44, cg); // 01 00 01 00 shuffle xxBA to BABA
          break;
       default:
          if (cg->comp()->getOption(TR_TraceCG))
@@ -173,6 +174,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
 
 TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
+   TR_ASSERT(false, "unsupported under 256 bit vectors.\n");
    TR::Node* firstChild = node->getChild(0);
    TR::Node* secondChild = node->getChild(1);
 

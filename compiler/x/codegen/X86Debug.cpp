@@ -1475,14 +1475,16 @@ TR_Debug::print(TR::FILE *pOutFile, TR::MemoryReference  * mr, TR_RegisterSizes 
    if (pOutFile == NULL)
       return;
 
-   const char *typeSpecifier[7] = {
+   const char *typeSpecifier[9] = {
       "byte",     // TR_ByteReg
       "word",     // TR_HalfWordReg
       "dword",    // TR_WordReg
       "qword",    // TR_DoubleWordReg
       "oword",    // TR_QuadWordReg
       "dword",    // TR_FloatReg
-      "qword" };  // TR_DoubleReg
+      "qword",    // TR_DoubleReg
+      "n/a",
+      "dqword"};  // TR_DoubleQuadWordReg
 
    TR_RegisterSizes addressSize = (TR::Compiler->target.cpu.isAMD64() ? TR_DoubleWordReg : TR_WordReg);
    bool hasTerm = false;
@@ -1588,14 +1590,16 @@ TR_Debug::printIntConstant(TR::FILE *pOutFile, int64_t value, int8_t radix, TR_R
    if (pOutFile == NULL)
       return 0;
 
-   const int8_t registerSizeToWidth[7] = {
+   const int8_t registerSizeToWidth[9] = {
       2,     // TR_ByteReg
       4,     // TR_HalfWordReg
       8,     // TR_WordReg
       16,    // TR_DoubleWordReg
       32,    // TR_QuadWordReg
       8,     // TR_FloatReg
-      16 };  // TR_DoubleReg
+      16,    // TR_DoubleReg
+      0,
+      64 };  // TR_DoubleQuadWordReg
 
    int8_t width = registerSizeToWidth[size];
 
@@ -1691,7 +1695,7 @@ TR_Debug::getTargetSizeFromInstruction(TR::Instruction  *instr)
 
    if (instr->getOpCode().hasXMMTarget() != 0)
       targetSize = TR_QuadWordReg;
-   if (instr->getOpCode().hasYMMTarget() != 0)
+   else if (instr->getOpCode().hasYMMTarget() != 0)
       targetSize = TR_DoubleQuadWordReg;
    else if (instr->getOpCode().hasIntTarget() != 0)
       targetSize = TR_WordReg;
@@ -1714,7 +1718,7 @@ TR_Debug::getSourceSizeFromInstruction(TR::Instruction  *instr)
 
    if (instr->getOpCode().hasXMMSource() != 0)
       sourceSize = TR_QuadWordReg;
-   if (instr->getOpCode().hasYMMSource() != 0)
+   else if (instr->getOpCode().hasYMMSource() != 0)
       sourceSize = TR_DoubleQuadWordReg;
    else if (instr->getOpCode().hasIntSource()!= 0)
       sourceSize = TR_WordReg;
@@ -1807,6 +1811,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::RealRegister * reg, TR_RegisterSizes siz
          trfprintf(pOutFile, "%s", getName(reg));
          break;
       case TR_QuadWordReg:
+      case TR_DoubleQuadWordReg:
       case TR_DoubleWordReg:
       case TR_HalfWordReg:
       case TR_ByteReg:
