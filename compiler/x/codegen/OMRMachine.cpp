@@ -242,7 +242,7 @@ OMR::X86::Machine::findBestFreeGPRegister(TR::Instruction   *currentInstruction,
       } candidates[16]; // TODO:AMD64: Should be max number of regs of any one kind
    int32_t      numCandidates = 0;
 
-   TR_ASSERT( (virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF || virtReg->getKind() == TR_VRF256)),
+   TR_ASSERT( (virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF)),
            "OMR::X86::Machine::findBestFreeGPRegister() ==> Unexpected register kind!" );
 
    bool useRegisterAssociations = self()->cg()->enableRegisterAssociations() ? true : false;
@@ -298,10 +298,6 @@ OMR::X86::Machine::findBestFreeGPRegister(TR::Instruction   *currentInstruction,
       case TR_QuadWordReg:
          first = TR::RealRegister::FirstXMMR;
          last  = TR::RealRegister::LastXMMR;
-         break;
-      case TR_DoubleQuadWordReg:
-         first = TR::RealRegister::FirstYMMR;
-         last  = TR::RealRegister::LastYMMR;
          break;
       default:
          TR_ASSERT(0, "unknown register size requested\n");
@@ -463,7 +459,7 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
    bool useRegisterInterferences = self()->cg()->enableRegisterInterferences() ? true : false;
    bool enableRematerialisation = self()->cg()->enableRematerialisation() ? true : false;
 
-   TR_ASSERT(virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF || virtReg->getKind() == TR_VRF256),
+   TR_ASSERT(virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF),
           "OMR::X86::Machine::freeBestGPRegister() ==> expecting to free GPRs or XMMRs only!");
 
    switch (requestedRegSize)
@@ -484,10 +480,6 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
       case TR_QuadWordReg:
          first = TR::RealRegister::FirstXMMR;
          last  = TR::RealRegister::LastXMMR;
-         break;
-      case TR_DoubleQuadWordReg:
-         first = TR::RealRegister::FirstYMMR;
-         last  = TR::RealRegister::LastYMMR;
          break;
       default:
          TR_ASSERT(0, "unknown register size requested\n");
@@ -941,20 +933,6 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
             }
          else
             {
-            location = self()->cg()->allocateSpill(16, false, &offset);
-            }
-         }
-      else if ((bestRegister->getKind() == TR_VRF256))
-         {
-         if (bestRegister->getBackingStorage())
-            {
-            // If there is backing storage associated with a register, it means the
-            // backing store wasn't returned to the free list and it can be used.
-            //
-            location = bestRegister->getBackingStorage();
-            }
-         else
-            {
             location = self()->cg()->allocateSpill(32, false, &offset);
             }
          }
@@ -1023,10 +1001,6 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
          op = (bestRegister->isSinglePrecision()) ? MOVSSRegMem : (self()->cg()->getXMMDoubleLoadOpCode());
          }
       else if (bestRegister->getKind() == TR_VRF)
-         {
-         op = MOVDQURegMem;
-         }
-      else if (bestRegister->getKind() == TR_VRF256)
          {
          op = MOVDQU256RegMem;
          }
@@ -1144,25 +1118,6 @@ TR::RealRegister *OMR::X86::Machine::reverseGPRSpillState(TR::Instruction     *c
             }
          }
       else if (spilledRegister->getKind() == TR_VRF)
-         {
-         instr = new (self()->cg()->trHeapMemory())
-            TR::X86MemRegInstruction(
-               currentInstruction,
-               MOVDQUMemReg,
-               tempMR,
-               targetRegister, self()->cg());
-
-         // Do not add a freed spill slot back onto the free list if the list is locked.
-         // This is to enforce re-use of the same spill slot for a virtual register
-         // while assigning non-linear control flow regions.
-         //
-         self()->cg()->freeSpill(location, 16, 0);
-         if (!self()->cg()->isFreeSpillListLocked())
-            {
-            spilledRegister->setBackingStorage(NULL);
-            }
-         }
-      else if (spilledRegister->getKind() == TR_VRF256)
          {
          instr = new (self()->cg()->trHeapMemory())
             TR::X86MemRegInstruction(
@@ -1361,7 +1316,7 @@ void OMR::X86::Machine::coerceXMMRegisterAssignment(TR::Instruction          *cu
          if (virtualRegister->getKind() == TR_VRF)
             {
             instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction,
-                                                MOVDQURegReg,
+                                                MOVDQU256RegReg,
                                                 currentAssignedRegister,
                                                 targetRegister, self()->cg());
             }
@@ -1402,9 +1357,13 @@ void OMR::X86::Machine::coerceXMMRegisterAssignment(TR::Instruction          *cu
             {
             xchgOp = XORPSRegReg;
             }
-         else //virtualRegister->getKind() == TR_VRF || (virtualRegister->getKind() == TR_FPR && !virtualRegister->isSinglePrecision())
+         else if (virtualRegister->getKind() == TR_FPR && !virtualRegister->isSinglePrecision())
             {
             xchgOp = XORPDRegReg;
+            }
+         else //virtualRegister->getKind() == TR_VRF
+            {
+            xchgOp = XORPD256RegReg;
             }
 
          self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
@@ -1439,7 +1398,7 @@ void OMR::X86::Machine::coerceXMMRegisterAssignment(TR::Instruction          *cu
             {
             if (virtualRegister->getKind() == TR_VRF)
                {
-               instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction, MOVDQURegReg, targetRegister, candidate, self()->cg());
+               instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction, MOVDQU256RegReg, targetRegister, candidate, self()->cg());
                }
             else if (currentTargetVirtual->isSinglePrecision())
                {
@@ -1480,9 +1439,13 @@ void OMR::X86::Machine::coerceXMMRegisterAssignment(TR::Instruction          *cu
             {
             xchgOp = XORPSRegReg;
             }
-         else //virtualRegister->getKind() == TR_VRF || (virtualRegister->getKind() == TR_FPR && !virtualRegister->isSinglePrecision())
+         else if (virtualRegister->getKind() == TR_FPR && !virtualRegister->isSinglePrecision())
             {
             xchgOp = XORPDRegReg;
+            }
+         else //virtualRegister->getKind() == TR_VRF
+            {
+	    xchgOp = XORPD256RegReg;
             }
 
          self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
@@ -1516,7 +1479,7 @@ void OMR::X86::Machine::coerceXMMRegisterAssignment(TR::Instruction          *cu
             {
             if (virtualRegister->getKind() == TR_VRF)
                {
-               instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction, MOVDQURegReg, targetRegister, candidate, self()->cg());
+               instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction, MOVDQU256RegReg, targetRegister, candidate, self()->cg());
                }
             else if (currentTargetVirtual->isSinglePrecision())
                {
@@ -2407,7 +2370,7 @@ void OMR::X86::Machine::disassociateUnspilledBackingStorage()
                }
             else if (virtReg->getKind() == TR_VRF)
                {
-               size = 16;
+               size = 32;
                }
             else
                {

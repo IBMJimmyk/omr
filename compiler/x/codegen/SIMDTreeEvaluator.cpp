@@ -54,7 +54,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDRegLoadEvaluator(TR::Node* node, TR::
    TR::Register* globalReg = node->getRegister();
    if (!globalReg)
       {
-      globalReg = cg->allocateRegister(TR_VRF256);
+      globalReg = cg->allocateRegister(TR_VRF);
       node->setRegister(globalReg);
       }
    return globalReg;
@@ -73,7 +73,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDloadEvaluator(TR::Node* node, TR::Cod
    {
    TR::MemoryReference* tempMR = generateX86MemoryReference(node, cg);
    tempMR = ConvertToPatchableMemoryReference(tempMR, node, cg);
-   TR::Register* resultReg = cg->allocateRegister(TR_VRF256);
+   TR::Register* resultReg = cg->allocateRegister(TR_VRF);
 
    TR_X86OpCodes opCode = BADIA32Op;
    switch (node->getSize())
@@ -130,7 +130,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
    TR::Node* childNode = node->getChild(0);
    TR::Register* childReg = cg->evaluate(childNode);
 
-   TR::Register* resultReg = cg->allocateRegister(TR_VRF256);
+   TR::Register* resultReg = cg->allocateRegister(TR_VRF);
    switch (node->getDataType())
       {
       /*case TR::VectorInt32:

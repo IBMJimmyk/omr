@@ -252,7 +252,7 @@ OMR::X86::RegisterDependencyConditions::RegisterDependencyConditions(
             {
             generateRegcopyDebugCounter(cg, "vrf");
             copyReg = cg->allocateRegister(TR_VRF);
-            generateRegRegInstruction(MOVDQURegReg, node, copyReg, child->getRegister(), cg);
+            generateRegRegInstruction(MOVDQU256RegReg, node, copyReg, child->getRegister(), cg);
             }
          else
             {
@@ -786,7 +786,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                   }
                else if (assignedReg->getKind() == TR_VRF)
                   {
-                  op = MOVDQURegMem;
+                  op = MOVDQU256RegMem;
                   }
                else
                   {

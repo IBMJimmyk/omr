@@ -3121,7 +3121,6 @@ TR_Debug::getRegisterKindName(TR_RegisterKinds rk)
       case TR_CCR:   return "CCR";
       case TR_X87:   return "X87";
       case TR_VRF:   return "VRF";
-      case TR_VRF256:   return "VRF256";
       case TR_VSX_SCALAR:   return "VSX_SCALAR";
       case TR_VSX_VECTOR:   return "VSX_VECTOR";
       case TR_GPR64: return "GPR64";

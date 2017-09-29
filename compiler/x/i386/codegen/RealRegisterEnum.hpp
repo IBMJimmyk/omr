@@ -79,19 +79,6 @@
    xmm7                    = 33,
    LastXMMR                = xmm7,
 
-
-   YMMRMaskOffset          = XMMRMaskOffset,
-   ymm0                    = xmm0,
-   FirstYMMR               = ymm0,
-   ymm1                    = xmm1,
-   ymm2                    = xmm2,
-   ymm3                    = xmm3,
-   ymm4                    = xmm4,
-   ymm5                    = xmm5,
-   ymm6                    = xmm6,
-   ymm7                    = xmm7,
-   LastYMMR                = xmm7,
-
    AllFPRegisters          = 34,
    ByteReg                 = 35,
    BestFreeReg             = 36,
@@ -99,5 +86,4 @@
    NumRegisters            = 38,
 
    NumXMMRegisters         = LastXMMR - FirstXMMR + 1,
-   NumYMMRegisters         = NumXMMRegisters,
    MaxAssignableRegisters  = NumXMMRegisters + (LastAssignableGPR - FirstGPR + 1) - 1 // -1 for stack pointer

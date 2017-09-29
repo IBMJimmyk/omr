@@ -84,23 +84,3 @@
    xmm14Mask         = 0x00004000 << XMMRMaskOffset,
    xmm15Mask         = 0x00008000 << XMMRMaskOffset,
    AvailableXMMRMask = 0x0000FFFF << XMMRMaskOffset,
-
-   // YMMR
-   //
-   ymm0Mask          = xmm0Mask,
-   ymm1Mask          = xmm1Mask,
-   ymm2Mask          = xmm2Mask,
-   ymm3Mask          = xmm3Mask,
-   ymm4Mask          = xmm4Mask,
-   ymm5Mask          = xmm5Mask,
-   ymm6Mask          = xmm6Mask,
-   ymm7Mask          = xmm7Mask,
-   ymm8Mask          = xmm8Mask,
-   ymm9Mask          = xmm9Mask,
-   ymm10Mask         = xmm10Mask,
-   ymm11Mask         = xmm11Mask,
-   ymm12Mask         = xmm12Mask,
-   ymm13Mask         = xmm13Mask,
-   ymm14Mask         = xmm14Mask,
-   ymm15Mask         = xmm15Mask,
-   AvailableYMMRMask = AvailableXMMRMask,
