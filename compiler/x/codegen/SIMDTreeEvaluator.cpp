@@ -125,6 +125,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDstoreEvaluator(TR::Node* node, TR::Co
    return NULL;
    }
 
+//TODO: reminder that VPERMQ is an AVX2 instruction
 TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
    TR::Node* childNode = node->getChild(0);
@@ -173,9 +174,13 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
    return resultReg;
    }
 
+//TODO: reminder that VPERMQ is an AVX2 instruction
 TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   TR_ASSERT(false, "unsupported under 256 bit vectors.\n"); //TODO: implement
+   if (TR::Compiler->target.is32Bit())
+      {
+      TR_ASSERT(false, "256 bit vector getvelem unsupported under 32 bit\n");
+      }
    TR::Node* firstChild = node->getChild(0);
    TR::Node* secondChild = node->getChild(1);
 
@@ -192,28 +197,28 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
          TR_ASSERT(false, "unsupported vector type %s in SIMDgetvelemEvaluator.\n", firstChild->getDataType().toString());
          break;
       case TR::VectorInt32:
-         elementCount = 4;
+         elementCount = 8;
          resReg = cg->allocateRegister();
          break;
       case TR::VectorInt64:
-         elementCount = 2;
-         if (TR::Compiler->target.is32Bit())
+         elementCount = 4;
+         /*if (TR::Compiler->target.is32Bit())
             {
             lowResReg = cg->allocateRegister();
             highResReg = cg->allocateRegister();
             resReg = cg->allocateRegisterPair(lowResReg, highResReg);
             }
          else
-            {
+            {*/
             resReg = cg->allocateRegister();
-            }
+            //}
          break;
       case TR::VectorFloat:
-         elementCount = 4;
+         elementCount = 8;
          resReg = cg->allocateSinglePrecisionRegister(TR_FPR);
          break;
       case TR::VectorDouble:
-         elementCount = 2;
+         elementCount = 4;
          resReg = cg->allocateRegister(TR_FPR);
          break;
       default:
@@ -226,21 +231,12 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
 
       TR_ASSERT(elem >= 0 && elem < elementCount, "Element can only be 0 to %u\n", elementCount - 1);
 
-      uint8_t shufconst = 0x00;
       TR::Register* dstReg = 0;
-      if (4 == elementCount)
+      if (8 == elementCount)
          {
          /*
-          * if elem = 0, access the most significant 32 bits (set shufconst to 0x03)
-          * if elem = 1, access the second most significant 32 bits (set shufconst to 0x02)
-          * if elem = 2, access the third most significant 32 bits (set shufconst to 0x01)
-          * if elem = 3, access the least significant 32 bits (set shufconst to 0x00)
-          */
-         shufconst = (uint8_t)((3 - elem) & 0x03);
-
-         /*
-          * the value to be read (indicated by shufconst) from srcVectorReg is splatted into all 4 slots in the dstReg
-          * this puts the value we want in the least significant bits and the other bits should never be read.
+          * the value to be read (indicated by elem) from srcVectorReg is copied into the least significant bits
+          * of dstReg. The other bits in dstReg should never be read.
           * for float, dstReg and resReg are the same because PSHUFD can work directly with TR_FPR registers
           * for Int32, the result needs to be moved from the dstReg to a TR_GPR resReg.
           */
@@ -253,17 +249,37 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
             dstReg = resReg;
             }
 
-         /*
-          * if elem = 3, the value we want is already in the least significant 32 bits
-          * as a result, a mov instruction is good enough and splatting the value is unnecessary
-          */
-         if (3 == elem)
+         switch (elem)
             {
-            generateRegRegInstruction(MOVDQURegReg, node, dstReg, srcVectorReg, cg);
-            }
-         else
-            {
-            generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, shufconst, cg);
+            case 0:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xff, cg); // permute Axxxxxxx to AxAxAxAx
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, dstReg, 0xff, cg);       // shuffle AxAxAxAx to AAAAAAAA
+               break;
+            case 1:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xff, cg); // permute xBxxxxxx to xBxBxBxB
+               break;
+            case 2:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xaa, cg); // permute xxCxxxxx to CxCxCxCx
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, dstReg, 0xff, cg);       // shuffle CxCxCxCx to CCCCCCCC
+               break;
+            case 3:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xaa, cg); // permute xxxDxxxx to xDxDxDxD
+               break;
+            case 4:
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, 0x03, cg); // shuffle xxxxExxx to xxxxxxxE
+               break;
+            case 5:
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, 0x02, cg); // shuffle xxxxxFxx to xxxxxxxF
+               break;
+            case 6:
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, 0x01, cg); // shuffle xxxxxxGx to xxxxxxxG
+               break;
+            case 7:
+               generateRegRegInstruction(MOVDQURegReg, node, dstReg, srcVectorReg, cg); //register already contains xxxxxxxH so just mov to dstReg
+               break;
+            default:
+               TR_ASSERT(false, "Element can only be 0 to %u\n", elementCount - 1);
+               break;
             }
 
          if (TR::VectorInt32 == firstChild->getDataType())
@@ -289,32 +305,38 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
 
          /*
           * the value to be read needs to be in the least significant 64 bits.
-          * if elem = 0, the value we want is in the most significant 64 bits and needs to be splatted into
-          * the least significant 64 bits (the other bits affected by the splat are never read)
-          * if elem = 1, the value we want is already in the least significant 64 bits
-          * as a result, a mov instruction is good enough and splatting the value is unnecessary
           */
-         if (1 == elem)
+         switch (elem)
             {
-            generateRegRegInstruction(MOVDQURegReg, node, dstReg, srcVectorReg, cg);
-            }
-         else //0 == elem
-            {
-            generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, 0x0e, cg);
+            case 0:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xff, cg); // permute ABxxxxxx to ABABABAB
+               break;
+            case 1:
+               generateRegRegImmInstruction(VPERMQRegRegImm1, node, dstReg, srcVectorReg, 0xaa, cg); // permute xxCDxxxx to CDCDCDCD
+               break;
+            case 2:
+               generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, 0x0e, cg); // shuffle xxxxEFxx to xxxxxxEF
+               break;
+            case 3:
+               generateRegRegInstruction(MOVDQURegReg, node, dstReg, srcVectorReg, cg); //register already contains xxxxxxGH so just mov to dstReg
+               break;
+            default:
+               TR_ASSERT(false, "Element can only be 0 to %u\n", elementCount - 1);
+               break;
             }
 
          if (TR::VectorInt64 == firstChild->getDataType())
             {
-            if (TR::Compiler->target.is32Bit())
+            /*if (TR::Compiler->target.is32Bit())
                {
                generateRegRegInstruction(MOVDReg4Reg, node, lowResReg, dstReg, cg);
                generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, (0 == elem) ? 0x03 : 0x01, cg);
                generateRegRegInstruction(MOVDReg4Reg, node, highResReg, dstReg, cg);
                }
             else
-               {
+               {*/
                generateRegRegInstruction(MOVQReg8Reg, node, resReg, dstReg, cg);
-               }
+               //}
             cg->stopUsingRegister(dstReg);
             }
          }
