@@ -5880,22 +5880,22 @@ enum BinaryArithmeticOps : uint32_t
    };
 static const TR_X86OpCodes BinaryArithmeticOpCodes[TR::NumOMRTypes][NumBinaryArithmeticOps] =
    {
-   //  Invalid,       Add,         Sub,       Mul,         Div
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // NoType
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int8
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int16
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int32
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Int64
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Float
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Double
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Address
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // VectorInt8
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // VectorInt16
-   { BADIA32Op, PADDD,       PSUBDRegReg, PMULLD,       BADIA32Op   }, // VectorInt32
-   { BADIA32Op, PADDQRegReg, PSUBQRegReg, BADIA32Op,    BADIA32Op   }, // VectorInt64
-   { BADIA32Op, ADDPSRegReg, SUBPSRegReg, MULPSRegReg,  DIVPSRegReg }, // VectorFloat
+   //  Invalid,       Add,            Sub,            Mul,             Div
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // NoType
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Int8
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Int16
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Int32
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Int64
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Float
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Double
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Address
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // VectorInt8
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // VectorInt16
+   { BADIA32Op, PADDD256RegReg, PSUBD256RegReg, PMULLD256RegReg, BADIA32Op      }, // VectorInt32
+   { BADIA32Op, PADDQ256RegReg, PSUBQ256RegReg, BADIA32Op,       BADIA32Op      }, // VectorInt64
+   { BADIA32Op, ADDPS256RegReg, SUBPS256RegReg, MULPS256RegReg,  DIVPS256RegReg }, // VectorFloat
    { BADIA32Op, ADDPD256RegReg, SUBPD256RegReg, MULPD256RegReg,  DIVPD256RegReg }, // VectorDouble
-   { BADIA32Op, BADIA32Op,   BADIA32Op,   BADIA32Op,    BADIA32Op   }, // Aggregate
+   { BADIA32Op, BADIA32Op,      BADIA32Op,      BADIA32Op,       BADIA32Op      }, // Aggregate
    };
 // For ILOpCode that can be translated to single SSE/AVX instructions
 TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEvaluator(TR::Node* node, TR::CodeGenerator* cg)
@@ -5942,13 +5942,13 @@ TR::Register* OMR::X86::TreeEvaluator::VectorLogicalEvaluator(TR::Node* node, TR
    switch (node->getOpCodeValue())
       {
       case TR::vand:
-         opCode = PANDRegReg;
+         opCode = PAND256RegReg;
          break;
       case TR::vor:
-         opCode = PORRegReg;
+         opCode = POR256RegReg;
          break;
       case TR::vxor:
-         opCode = PXORRegReg;
+         opCode = PXOR256RegReg;
          break;
       default:
          TR_ASSERT(false, "Unsupported OpCode");
@@ -5959,7 +5959,7 @@ TR::Register* OMR::X86::TreeEvaluator::VectorLogicalEvaluator(TR::Node* node, TR
    TR::Register* operandReg1 = cg->evaluate(operandNode1);
 
    TR::Register* resultReg = cg->allocateRegister(operandReg0->getKind());
-   generateRegRegInstruction(MOVDQURegReg, node, resultReg, operandReg0, cg);
+   generateRegRegInstruction(MOVDQU256RegReg, node, resultReg, operandReg0, cg);
 
    TR_ASSERT(opCode != BADIA32Op, "VectorLogicalEvaluator: unsupported data type or arithmetic.");
    generateRegRegInstruction(opCode, node, resultReg, operandReg1, cg);
