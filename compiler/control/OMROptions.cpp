@@ -1249,6 +1249,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"useOldHCRGuardAOTRelocations", "I\tcreate apparently ineffective AOT relocations for HCR guards", SET_OPTION_BIT(TR_UseOldHCRGuardAOTRelocations), "F"},
    {"useOldIProfilerDeactivationLogic", "M\tUse Old Iprofiler Deactivation Logic", SET_OPTION_BIT(TR_UseOldIProfilerDeactivationLogic), "F", NOT_IN_SUBSET},
    {"useOptLevelAdjustment",            "M\tEnable decreasing the opt level based on load", SET_OPTION_BIT(TR_UseOptLevelAdjustment), "F", NOT_IN_SUBSET},
+   {"useRecompInfo",                      "M\tuse Recomp Info",                                SET_OPTION_BIT(TR_UseRecompInfo), "F"},
    {"useRIOnlyForLargeQSZ", "M\tUse RI only when the compilation queue size grows too large", SET_OPTION_BIT(TR_UseRIOnlyForLargeQSZ), "F", NOT_IN_SUBSET },
    {"userSpaceVirtualMemoryMB=", "O<nnn>\tsize of the virtual memory that is user space in MB (not used on Windows, AIX, or 64 bit systems)",
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_userSpaceVirtualMemoryMB, 0, "F%d", NOT_IN_SUBSET},
