@@ -1789,6 +1789,10 @@ TR_OpaqueMethodBlock *OMR::Compilation::getMethodFromNode(TR::Node * node)
 
 int32_t OMR::Compilation::getLineNumber(TR::Node * node)
    {
+   if (NULL == node)
+      {
+      return -1;
+      }
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    return self()->fe()->getLineNumberForMethodAndByteCodeIndex(self()->getMethodFromNode(node), bcInfo.getByteCodeIndex());
    }
