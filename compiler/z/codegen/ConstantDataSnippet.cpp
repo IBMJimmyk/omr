@@ -146,12 +146,12 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          {
          if (cg()->needRelocationsForStatics())
             {
-            TR_ASSERT_FATAL((uintptr_t)getSymbolReference()->getCPIndex() != (uintptr_t)-1, "Unexpected cpIndex of -1 - addMetaDataForCodeAddress. synRefNum: %d", getSymbolReference()->getReferenceNumber());
             AOTcgDiag3(comp, "add relocation (%d) cursor=%x symbolReference=%x\n", reloType, cursor, getSymbolReference());
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) getNode()->getSymbolReference(),
                                      getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                    (TR_ExternalRelocationTargetKind) reloType, cg()),
                                      __FILE__,__LINE__, getNode());
+            TR_ASSERT_FATAL((uintptr_t)getNode()->getSymbolReference()->getCPIndex() != (uintptr_t)-1, "Unexpected cpIndex of -1 - addMetaDataForCodeAddress. node: %p, symRefNum: %d", getNode(), getNode()->getSymbolReference()->getReferenceNumber());
             }
          }
          break;
