@@ -2162,7 +2162,8 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
 
    if ( isISO88591Encoder || isSBCSEncoder || isEncodeUtf16 ||
        (rm == TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII)         ||
-       (rm == TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8))
+       (rm == TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8) ||
+       (rm == TR::java_lang_StringCoding_asciiFastLoop))
        encode = true;
 
    if (encode)
@@ -3761,6 +3762,7 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
          {
          case TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray:  threshold = 0; break;
          case TR::java_lang_StringCoding_implEncodeISOArray:  threshold = 0; break;
+         case TR::java_lang_StringCoding_asciiFastLoop:  threshold = 0; break;  //TODO: I made this up. This isn't tested on Z.
          case TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1: threshold = 0; break;
 
          case TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII: threshold = 0; break;

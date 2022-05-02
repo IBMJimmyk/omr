@@ -5479,6 +5479,7 @@ static bool canFoldNonOverriddenGuard(OMR::ValuePropagation *vp, TR::Node *callN
 TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
+   traceMsg(vp->comp(), "zzz constrainCall - starting on on node: %p\n", node);
 
    if (vp->lastTimeThrough() &&
        vp->_isGlobalPropagation)
@@ -5530,9 +5531,11 @@ TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node)
 #ifdef J9_PROJECT_SPECIFIC
    TR::RecognizedMethod rm = symbol->getRecognizedMethod();
    // Look for recognized converters call.
+   traceMsg(vp->comp(), "zzz constrainCall - checking converter call on node: %p\n", node);
    if (vp->comp()->isConverterMethod(rm) &&
          vp->comp()->canTransformConverterMethod(rm))
       {
+      traceMsg(vp->comp(), "zzz constrainCall - found converter call on node: %p\n", node);
       if (!vp->_converterCalls.find(vp->_curTree))
          vp->_converterCalls.add(vp->_curTree);
       }
