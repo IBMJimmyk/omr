@@ -2698,7 +2698,7 @@ TR_TransformInlinedFunction::transform()
    // If the first block has exception predecessors or multiply predecessors then we can't merge
    // the first block with the caller's block
    //
-   if (comp()->getOption(TR_EnableJProfiling) ||
+   if ((comp()->getProfilingMode() == JProfiling) ||
        (firstBlock->getPredecessors().size() > 1) ||
        firstBlock->hasExceptionSuccessors() ||
        comp()->fe()->isMethodTracingEnabled(calleeResolvedMethod->getPersistentIdentifier()) ||
