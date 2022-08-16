@@ -1335,6 +1335,7 @@ bool OMR::Compilation::incInlineDepth(TR_OpaqueMethodBlock *methodInfo, TR::Reso
    int32_t maxCallerIndex = TR_ByteCodeInfo::maxCallerIndex;
    //This restriction is due to a limited number of bits allocated to callerIndex in TR_ByteCodeInfo
    //For example, in Java TR_ByteCodeInfo::maxCallerIndex is set to 4095 (12 bits and one used for signness)
+   traceMsg(self(), "RAHIL: In incInlineDepth for methodInfo %p, resolvedMethodSymbol = %p, [%d,%d]\n", methodInfo, method, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex());
    if (self()->getNumInlinedCallSites() >= unsigned(maxCallerIndex))
       {
       traceMsg(self(), "The maximum number of inlined methods %d is reached\n", TR_ByteCodeInfo::maxCallerIndex);
@@ -1356,6 +1357,7 @@ bool OMR::Compilation::incInlineDepth(TR_OpaqueMethodBlock *methodInfo, TR::Reso
 
    uint32_t callSiteIndex = _inlinedCallSites.add( TR_InlinedCallSiteInfo(methodInfo, bcInfo, method, callSymRef, directCall, aotMethodInfo) );
    _inlinedCallStack.push(callSiteIndex);
+   if (self()->trace(OMR::inlining)) { traceMsg( self(), "ZZZZZ : incInlineDepth PUSH : callSiteIndex = %d argInfo=%p, method=%p, callSymRef=%p\n", callSiteIndex, argInfo,  method, callSymRef); }
    _inlinedCallArgInfoStack.push(argInfo);
 
    int16_t inlinedCallStackSize = self()->getInlineDepth();
@@ -1386,13 +1388,16 @@ void OMR::Compilation::decInlineDepth(bool removeInlinedCallSitesEntry)
          self()->getOSRCompilationData()->setOSRMethodDataArraySize(self()->getNumInlinedCallSites()+1);
          }
       }
-   _inlinedCallArgInfoStack.pop();
+   TR_PrexArgInfo *ai = _inlinedCallArgInfoStack.pop();
+   if (self()->trace(OMR::inlining)) { traceMsg( self(), "ZZZZZ : decInlineDepth POP Before POP inlinedSiteIndex = %d : argInfo=%p\n",getCurrentInlinedSiteIndex(), ai); }
    _inlinedCallStack.pop();
+   if (self()->trace(OMR::inlining)) { traceMsg( self(), "ZZZZZ : decInlineDepth POP After POP inlinedSiteIndex = %d : argInfo=%p\n",getCurrentInlinedSiteIndex(), ai); }
 
    if ( self()->getInlineDepth() == _inlinedFramesAdded )
       {
       self()->resetInlineDepth();
       }
+   if (self()->trace(OMR::inlining)) { traceMsg( self(), "ZZZZZ : decInlineDepth POP After reset inlinedSiteIndex = %d : argInfo=%p\n",getCurrentInlinedSiteIndex(), ai); }
    }
 
 
