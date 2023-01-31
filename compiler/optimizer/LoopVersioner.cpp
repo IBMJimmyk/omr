@@ -814,9 +814,17 @@ void TR_LoopVersioner::performLoopTransfer()
 
    dumpOptDetails(comp(), "Loop transfer in %s with size %d\n", comp()->signature(), _virtualGuardInfo.getSize());
 
+   // TODO: Probably call fixupVirtualGuardTargets() here.
+   static const bool useNewLoopTransfer = feGetEnv("TR_NewLoopTransfer") != NULL;
+   if (useNewLoopTransfer)
+      {
+      fixupVirtualGuardTargets();
+      return;
+      }
+
    TR_ScratchList<TR::Node> processedVirtualGuards(trMemory());
    TR::CFG *cfg = comp()->getFlowGraph();
-   VirtualGuardInfo *vgInfo = NULL;
+   ColdLoopVirtualGuardInfo *vgInfo = NULL;
    for (vgInfo = _virtualGuardInfo.getFirst(); vgInfo; vgInfo = vgInfo->getNext())
       {
       ListIterator<VirtualGuardPair> guardsIt(&vgInfo->_virtualGuardPairs);
@@ -847,6 +855,254 @@ void TR_LoopVersioner::performLoopTransfer()
                }
             }
          }
+      }
+   }
+
+void TR_LoopVersioner::fixupVirtualGuardTargets()
+   {
+   TR::CFG *cfg = comp()->getFlowGraph();
+   TR_ScratchList<TR::Block> *coldLoopList = new (trStackMemory()) TR_ScratchList<TR::Block>(trMemory());
+   TR_HashTab *switchInfoHashTab = new (trStackMemory()) TR_HashTab(trMemory(), stackAlloc);
+   TR_HashId id = 0;
+
+   for (ColdLoopVirtualGuardInfo *outerColdLoopVgInfo = _virtualGuardInfo.getFirst(); outerColdLoopVgInfo; outerColdLoopVgInfo = outerColdLoopVgInfo->getNext())
+      {
+      int32_t switchCaseID = 0;
+      TR::SymbolReference *switchCaseIDSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Int32);
+
+      traceMsg(comp(), "zzzouterColdLoopEntryBlock - block_%d\n", outerColdLoopVgInfo->_outerColdLoopEntryBlock->getNumber());
+
+      ListIterator<VirtualGuardPair> guardsIt(&outerColdLoopVgInfo->_virtualGuardPairs);
+      for (VirtualGuardPair *currentVirtualGuard = guardsIt.getFirst(); currentVirtualGuard; currentVirtualGuard = guardsIt.getNext())
+         {
+         TR::Node *hotGuardCheckNode = currentVirtualGuard->_hotGuardBlock->getLastRealTreeTop()->getNode();
+         TR::Node *coldGuardCheckNode = currentVirtualGuard->_coldGuardBlock->getLastRealTreeTop()->getNode();
+
+         /*
+          * TODO: These checks copied from performLoopTransfer.
+          * They seem to be neceesary but I need to understand why.
+          * This breaks without the checks.
+          */
+         if (!hotGuardCheckNode->getOpCode().isIf() ||
+             !hotGuardCheckNode->isTheVirtualGuardForAGuardedInlinedCall() ||
+             !coldGuardCheckNode->getOpCode().isIf() ||
+             !coldGuardCheckNode->isTheVirtualGuardForAGuardedInlinedCall())
+            {
+            continue;
+            }
+
+         if (!currentVirtualGuard->_isInsideInnerLoop)
+            {
+            // non-inner loop case
+            TR::Block *outerColdLoopEntryBlock = outerColdLoopVgInfo->_outerColdLoopEntryBlock;
+
+            TR::Block *coldGuardBlock = currentVirtualGuard->_coldGuardBlock;
+            TR::TreeTop *coldGuardTree = coldGuardBlock->getLastRealTreeTop();
+            TR::Node *coldGuardNode = coldGuardTree->getNode();
+            TR::TreeTop *destTreetop = coldGuardNode->getBranchDestination(); //TODO: I think this is a BBStart treetop? I hope it is.
+
+            traceMsg(comp(), "zzz getBranchDestination: %p, node: %p\n", coldGuardNode->getBranchDestination()->getNode());
+
+            /*
+             * Create a ColdLoopSwitchCaseInfo entry to create a case later on for the switch inside outerColdLoopEntryBlock
+             * - switchCaseID - This is the case number to add to the switch block
+             * - destTreetop - This is the destination TreeTop to jump to from the switch block
+             */
+            ColdLoopSwitchCaseInfo *caseInfo = (ColdLoopSwitchCaseInfo *)trMemory()->allocateStackMemory(sizeof(ColdLoopSwitchCaseInfo));
+            caseInfo->_switchCaseID = switchCaseID;
+            caseInfo->_destTreetop = destTreetop;
+
+            if (!switchInfoHashTab->locate(outerColdLoopEntryBlock, id))
+               {
+               //This is a newly identified cold loop
+               TR_ScratchList<ColdLoopSwitchCaseInfo> *outerColdLoopSwitchCaseInfoList = new (trStackMemory()) TR_ScratchList<ColdLoopSwitchCaseInfo>(trMemory());
+               outerColdLoopSwitchCaseInfoList->add(caseInfo);
+               switchInfoHashTab->add(outerColdLoopEntryBlock, id, outerColdLoopSwitchCaseInfoList); //add has a bad API, id field does nothing here
+               coldLoopList->add(outerColdLoopEntryBlock);
+               traceMsg(comp(), "coldLoopList - Added outerColdLoopEntryBlock, block_%d (%p)\n", outerColdLoopEntryBlock->getNumber(), outerColdLoopEntryBlock->getEntry()->getNode());
+               }
+            else
+               {
+               ((TR_ScratchList<ColdLoopSwitchCaseInfo> *)switchInfoHashTab->getData(id))->add(caseInfo);
+               }
+            }
+         else
+            {
+            // inner loop case
+            //TODO: make sure inner loops are identified properly
+            TR::Block *innerColdLoopEntryBlock = currentVirtualGuard->_coldGuardLoopEntryBlock; //TODO: make sure this block is found correctly
+
+            TR::Block *coldGuardBlock = currentVirtualGuard->_coldGuardBlock;
+            TR::TreeTop *coldGuardTree = coldGuardBlock->getLastRealTreeTop();
+            TR::Node *coldGuardNode = coldGuardTree->getNode();
+            TR::TreeTop *destTreetop = coldGuardNode->getBranchDestination();
+
+            /*
+             * Create a ColdLoopSwitchCaseInfo entry to create a case later on for the switch inside innerColdLoopEntryBlock
+             * - switchCaseID - This is the case number to add to the switch block
+             * - destTreetop - This is the destination TreeTop to jump to from the switch block
+             */
+            ColdLoopSwitchCaseInfo *caseInfo = (ColdLoopSwitchCaseInfo *)trMemory()->allocateStackMemory(sizeof(ColdLoopSwitchCaseInfo));
+            caseInfo->_switchCaseID = switchCaseID;
+            caseInfo->_destTreetop = destTreetop;
+
+            if (!switchInfoHashTab->locate(innerColdLoopEntryBlock, id))
+               {
+               //This is a newly identified cold loop
+               TR_ScratchList<ColdLoopSwitchCaseInfo> *innerColdLoopSwitchCaseInfoList = new (trStackMemory()) TR_ScratchList<ColdLoopSwitchCaseInfo>(trMemory());
+               innerColdLoopSwitchCaseInfoList->add(caseInfo);
+               switchInfoHashTab->add(innerColdLoopEntryBlock, id, innerColdLoopSwitchCaseInfoList); //add has a bad API, id field does nothing here
+               coldLoopList->add(innerColdLoopEntryBlock);
+               traceMsg(comp(), "coldLoopList - Added innerColdLoopEntryBlock, block_%d (%p)\n", innerColdLoopEntryBlock->getNumber(), innerColdLoopEntryBlock->getEntry()->getNode());
+               }
+            else
+               {
+               ((TR_ScratchList<ColdLoopSwitchCaseInfo> *) switchInfoHashTab->getData(id))->add(caseInfo);
+               }
+
+            // Now handle recusing from the inner to outer loop
+            TR_ASSERT_FATAL(outerColdLoopVgInfo->_outerColdLoopEntryBlock->getStructureOf()->getParent()->isNaturalLoop(), "Cold side outer loop is not a natural loop block_%d", outerColdLoopVgInfo->_outerColdLoopEntryBlock->getNumber());
+            TR_ASSERT_FATAL(currentVirtualGuard->_coldGuardBlock->getStructureOf()->getParent()->asRegion()->isNaturalLoop(), "Cold side inner loop is not a natural loop block_%d", currentVirtualGuard->_coldGuardLoopEntryBlock->getNumber());
+            TR_ASSERT_FATAL(currentVirtualGuard->_coldGuardLoopEntryBlock->getStructureOf()->getParent()->isNaturalLoop(), "Cold side inner loop is not a natural loop block_%d", currentVirtualGuard->_coldGuardLoopEntryBlock->getNumber());
+
+            TR_RegionStructure *previousColdLoopRegion = currentVirtualGuard->_coldGuardBlock->getStructureOf()->getParent();
+            for (TR_RegionStructure *nextColdLoopRegion = previousColdLoopRegion->getParent(); nextColdLoopRegion; nextColdLoopRegion = nextColdLoopRegion->getParent())
+               {
+               if (!nextColdLoopRegion->isNaturalLoop())
+                  {
+                  //TODO: if it isn't a natural loop, what is it?
+                  TR_ASSERT_FATAL(false, "nextColdLoopRegion not a natural loop. nextColdLoopRegion: %p", nextColdLoopRegion);
+                  continue;
+                  }
+               TR::Block *middleColdLoopEntryBlock = nextColdLoopRegion->getEntryBlock();
+
+               TR::TreeTop *previousColdLoopEntryTreetop = previousColdLoopRegion->getEntryBlock()->getEntry();
+
+               /*
+                * Create a ColdLoopSwitchCaseInfo entry to create a case later on for the switch inside middleColdLoopEntryBlock
+                * - switchCaseID - This is the case number to add to the switch block
+                * - previousColdLoopEntryTreetop - This is the destination TreeTop to jump to from the switch block
+                */
+               ColdLoopSwitchCaseInfo *middleCaseInfo = (ColdLoopSwitchCaseInfo *)trMemory()->allocateStackMemory(sizeof(ColdLoopSwitchCaseInfo));
+               middleCaseInfo->_switchCaseID = switchCaseID;
+               middleCaseInfo->_destTreetop = previousColdLoopEntryTreetop;
+
+               if (!switchInfoHashTab->locate(middleColdLoopEntryBlock, id))
+                  {
+                  //This is a newly identified cold loop
+                  TR_ScratchList<ColdLoopSwitchCaseInfo> *middleColdLoopSwitchCaseInfoList = new (trStackMemory()) TR_ScratchList<ColdLoopSwitchCaseInfo>(trMemory());
+                  middleColdLoopSwitchCaseInfoList->add(middleCaseInfo);
+                  switchInfoHashTab->add(middleColdLoopEntryBlock, id, middleColdLoopSwitchCaseInfoList); //add has a bad API, id field does nothing here
+                  coldLoopList->add(middleColdLoopEntryBlock);
+                  traceMsg(comp(), "coldLoopList - Added middleColdLoopEntryBlock, block_%d (%p)\n", middleColdLoopEntryBlock->getNumber(), middleColdLoopEntryBlock->getEntry()->getNode());
+                  }
+               else
+                  {
+                  ((TR_ScratchList<ColdLoopSwitchCaseInfo> *)switchInfoHashTab->getData(id))->add(middleCaseInfo);
+                  }
+
+               previousColdLoopRegion = nextColdLoopRegion;
+
+               if (middleColdLoopEntryBlock == outerColdLoopVgInfo->_outerColdLoopEntryBlock)
+                  {
+                  break;
+                  }
+               }
+            TR_ASSERT_FATAL(previousColdLoopRegion->getEntryBlock() == outerColdLoopVgInfo->_outerColdLoopEntryBlock, "Did not recurse to the outer most cold loop as expected. block_%d", innerColdLoopEntryBlock->getNumber());
+            }
+
+         /*
+          * TODO: make sure createEmptyGoto works. It wasn't in use before.
+          * - I attach the goto block to the end of the compile. Is that the best place to put it?
+          */
+         TR::Block *gotoBlock = createEmptyGoto(outerColdLoopVgInfo->_outerColdLoopEntryBlock, comp()->getMethodSymbol()->getLastTreeTop());
+         cfg->addNode(gotoBlock);
+         traceMsg(comp(), "zzzcreated goto block, block_%d, jumps to block_%d \n", gotoBlock->getNumber(), outerColdLoopVgInfo->_outerColdLoopEntryBlock->getNumber());
+
+         TR::Node *switchCaseIDNode = TR::Node::iconst(gotoBlock->getEntry()->getNode(), switchCaseID);
+         TR::Node *switchCaseIDStoreNode = TR::Node::createWithSymRef(TR::istore, 1, 1, switchCaseIDNode, switchCaseIDSymRef); //TODO: check bytecode node here
+         gotoBlock->prepend(TR::TreeTop::create(comp(), switchCaseIDStoreNode));
+
+         //change hot side branch target to gotoBlock
+         cfg->setStructure(NULL);
+         currentVirtualGuard->_hotGuardBlock->changeBranchDestination(gotoBlock->getEntry(), cfg);
+         if (!gotoBlock->hasSuccessor(outerColdLoopVgInfo->_outerColdLoopEntryBlock))
+            {
+            cfg->addEdge(gotoBlock, outerColdLoopVgInfo->_outerColdLoopEntryBlock);
+            }
+
+         switchCaseID++;
+         }
+
+      ListIterator<TR::Block> coldLoopListIt(coldLoopList);
+      for (TR::Block *nextColdLoopEntryBlock = coldLoopListIt.getFirst(); nextColdLoopEntryBlock; nextColdLoopEntryBlock = coldLoopListIt.getNext())
+         {
+         traceMsg(comp(), "nextColdLoopEntryBlock, block_%d (%p)\n", nextColdLoopEntryBlock->getNumber(), nextColdLoopEntryBlock->getEntry()->getNode());
+         if (!switchInfoHashTab->locate(nextColdLoopEntryBlock, id))
+            {
+            TR_ASSERT_FATAL(false, "Unable to find nextColdLoopEntryBlock [%p](%p) in switchInfoHashTab [%p].\n", nextColdLoopEntryBlock, nextColdLoopEntryBlock->getEntry()->getNode(), switchInfoHashTab);
+            }
+
+         // Find loop invariant block and put in the default value for switchCaseIDSymRef (it should be -1 by default)
+         TR::Block *coldLoopPreheaderBlock = NULL;
+         for (auto edge = nextColdLoopEntryBlock->getPredecessors().begin(); edge != nextColdLoopEntryBlock->getPredecessors().end(); ++edge)
+            {
+            TR::Block *preheaderCandidateBlock = toBlock((*edge)->getFrom());
+            traceMsg(comp(), "preheaderCandidateBlock, block_%d (%p)\n", preheaderCandidateBlock->getNumber(), preheaderCandidateBlock->getEntry()->getNode());
+            //TR_ASSERT_FATAL(preheaderCandidateBlock->getStructureOf(), "Null preheaderCandidateBlock structure[%p](%p) block_%d.\n", preheaderCandidateBlock, preheaderCandidateBlock->getEntry()->getNode(), preheaderCandidateBlock->getNumber());
+            if (preheaderCandidateBlock->isLoopInvariantBlock())
+               {
+               coldLoopPreheaderBlock = preheaderCandidateBlock;
+               break;
+               }
+            }
+         TR_ASSERT_FATAL(coldLoopPreheaderBlock, "Unable to find any loop preheader blocks. nextColdLoopEntryBlock [%p](%p)\n", nextColdLoopEntryBlock, nextColdLoopEntryBlock->getEntry()->getNode());
+
+         TR::Node *defaultSwitchCaseIDNode = TR::Node::iconst(coldLoopPreheaderBlock->getEntry()->getNode(), -1);
+         TR::Node *defaultSwitchCaseIDStoreNode = TR::Node::createWithSymRef(TR::istore, 1, 1, defaultSwitchCaseIDNode, switchCaseIDSymRef);  //TODO: check bytecode node here
+         coldLoopPreheaderBlock->prepend(TR::TreeTop::create(comp(), defaultSwitchCaseIDStoreNode));
+
+         //TODO: does the default value need to be set on the hot side as well? If it somehows jumps into the middle of the cold loop it will break.
+
+         TR_ScratchList<ColdLoopSwitchCaseInfo> *coldLoopSwitchCaseInfoList = (TR_ScratchList<ColdLoopSwitchCaseInfo> *)switchInfoHashTab->getData(id);
+         int32_t numCases = coldLoopSwitchCaseInfoList->getSize();
+
+         TR::Block *defaultTargetBlock = nextColdLoopEntryBlock->split(nextColdLoopEntryBlock->getEntry()->getNextTreeTop(), cfg); //TODO: make sure split works as expected
+         TR::Node *switchNode = TR::Node::create(nextColdLoopEntryBlock->getEntry()->getNode(), TR::lookup, numCases+2);
+         nextColdLoopEntryBlock->prepend(TR::TreeTop::create(comp(), switchNode));
+
+         traceMsg(comp(), "zzzcreated lookup block, block_%d\n", nextColdLoopEntryBlock->getNumber());
+
+         TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "newLoopTransfer/(%s)/(%s)/block_%d", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), nextColdLoopEntryBlock->getNumber()), nextColdLoopEntryBlock->getFirstRealTreeTop());
+
+         TR::Node *switchCaseIDLoadNode = TR::Node::createWithSymRef(switchNode, TR::iload, 0, switchCaseIDSymRef);
+         TR::Node *defaultCaseNode = TR::Node::createCase(switchNode, defaultTargetBlock->getEntry());
+         switchNode->setAndIncChild(0, switchCaseIDLoadNode);
+         switchNode->setAndIncChild(1, defaultCaseNode);
+
+         int32_t i = 2; //start at child 2 since child 0 and 1 have already been added.
+         ListIterator<ColdLoopSwitchCaseInfo> switchCaseIt(coldLoopSwitchCaseInfoList);
+         for (ColdLoopSwitchCaseInfo *nextColdLoopSwitchCaseInfo = switchCaseIt.getFirst(); nextColdLoopSwitchCaseInfo; nextColdLoopSwitchCaseInfo = switchCaseIt.getNext())
+            {
+            //TODO: do switch tree options need to be in order?
+            int32_t switchCaseNum = nextColdLoopSwitchCaseInfo->_switchCaseID;
+
+            TR::TreeTop *jumpToTreetop = nextColdLoopSwitchCaseInfo->_destTreetop;
+            TR::Block *jumpToBlock = jumpToTreetop->getNode()->getBlock();
+
+            TR::Node *nextCaseNode = TR::Node::createCase(switchNode, jumpToTreetop, switchCaseNum);
+            switchNode->setAndIncChild(i, nextCaseNode);
+
+            if (!nextColdLoopEntryBlock->hasSuccessor(jumpToBlock))
+               {
+               cfg->addEdge(nextColdLoopEntryBlock, jumpToBlock);
+               }
+            i++;
+            }
+         }
+
+      switchInfoHashTab->clear();
+      coldLoopList->deleteAll();
       }
    }
 
@@ -910,7 +1166,7 @@ TR::Node *TR_LoopVersioner::createSwitchNode(TR::Block *clonedHeader, TR::Symbol
    return switchNode;
    }
 
-TR::Block * TR_LoopVersioner::createEmptyGoto(TR::Block *source, TR::Block *dest, TR::TreeTop *endTree)
+TR::Block * TR_LoopVersioner::createEmptyGoto(TR::Block *dest, TR::TreeTop *endTree)
    {
    // create an empty goto block
    // its the caller's responsibility to add this block to the cfg
@@ -3551,7 +3807,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
       endTree = treeTop;
       }
 
-   VirtualGuardInfo *vgInfo = NULL;
+   ColdLoopVirtualGuardInfo *vgInfo = NULL;
 
    // Clone blocks and trees
    //
@@ -3606,6 +3862,8 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          }
       if (nextBlock->isSynchronizedHandler())
          nextClonedBlock->setIsSynchronizedHandler();
+
+      nextClonedBlock->setAsLoopInvariantBlock(nextBlock->isLoopInvariantBlock());
 
       _cfg->addNode(nextClonedBlock);
 
@@ -3672,8 +3930,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          //
          if (!vgInfo)
             {
-            vgInfo = new (trStackMemory()) VirtualGuardInfo(comp());
-            vgInfo->_loopEntry = blockAtHeadOfLoop;
+            vgInfo = new (trStackMemory()) ColdLoopVirtualGuardInfo(comp());
             _virtualGuardInfo.add(vgInfo);
             }
 
@@ -3682,15 +3939,16 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          virtualGuardPair->_coldGuardBlock = nextClonedBlock;
          if (trace())
             traceMsg(comp(), "virtualGuardPair at guard node %p hotGuardBlock %d coldGuardBlock %d\n", nextBlock->getLastRealTreeTop()->getNode(), nextBlock->getNumber(), nextClonedBlock->getNumber());
-         virtualGuardPair->_isGuarded = false;
          // check if the virtual guard is in an inner loop
          //
          TR_RegionStructure *parent = nextBlock->getStructureOf()->getParent()->asRegion();
+         TR_ASSERT_FATAL(nextBlock->getStructureOf()->getParent() == parent, "asRegion is not redundant");
+         //TODO: does this need to recurse outward?
          if ((parent != whileLoop) &&
                (parent && parent->isNaturalLoop()))
             {
             TR::Block *entry = parent->getEntryBlock();
-            virtualGuardPair->_coldGuardLoopEntryBlock = entry;
+            virtualGuardPair->_coldGuardLoopEntryBlock = entry; //This is actually to hot side version. It gets changed to cold side later.
             virtualGuardPair->_isInsideInnerLoop = true;
             }
          else
@@ -3949,8 +4207,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
 
    if (vgInfo)
       {
-      vgInfo->_coldLoopEntryBlock = blockAtHeadOfClonedLoop;
-      vgInfo->_coldLoopInvariantBlock = clonedLoopInvariantBlock;
+      vgInfo->_outerColdLoopEntryBlock = blockAtHeadOfClonedLoop;
       }
 
    // --------------------------------------------------------------------------------
