@@ -82,7 +82,6 @@ struct VirtualGuardPair
    {
    TR::Block *_hotGuardBlock;
    TR::Block *_coldGuardBlock;
-   bool _isGuarded;
    TR::Block *_coldGuardLoopEntryBlock;
    bool _isInsideInnerLoop;
    };
@@ -96,21 +95,23 @@ struct VGLoopInfo
    int32_t _targetNum;
    };
 
-struct VirtualGuardInfo : public TR_Link<VirtualGuardInfo>
+struct ColdLoopVirtualGuardInfo : public TR_Link<ColdLoopVirtualGuardInfo>
    {
-   VirtualGuardInfo(TR::Compilation *c)
+   ColdLoopVirtualGuardInfo(TR::Compilation *c)
       :_virtualGuardPairs(c->trMemory())
       {
 
       _virtualGuardPairs.deleteAll();
-      _coldLoopEntryBlock = NULL;
-      _coldLoopInvariantBlock = NULL;
-      _loopEntry = NULL;
+      _outerColdLoopEntryBlock = NULL;
       }
    List<VirtualGuardPair> _virtualGuardPairs;
-   TR::Block *_coldLoopEntryBlock;
-   TR::Block *_coldLoopInvariantBlock;
-   TR::Block *_loopEntry;
+   TR::Block *_outerColdLoopEntryBlock;
+   };
+
+struct ColdLoopSwitchCaseInfo
+   {
+   int32_t _switchCaseID;
+   TR::TreeTop *_destTreetop;
    };
 
  class TR_NodeParentBlockTuple
@@ -1068,12 +1069,13 @@ class TR_LoopVersioner : public TR_LoopTransformer
    void updateDefinitionsAndCollectProfiledExprs(TR::Node *,TR::Node *, vcount_t, List<TR::Node> *, List<TR_NodeParentSymRef> *, List<TR_NodeParentSymRefWeightTuple> *, TR::Node *, bool, TR::Block *, int32_t);
    void findAndReplaceContigArrayLen(TR::Node *, TR::Node *, vcount_t);
    void performLoopTransfer();
+   void fixupVirtualGuardTargets();
 
    bool replaceInductionVariable(TR::Node *, TR::Node *, int, int, TR::Node *, int);
 
    bool ivLoadSeesUpdatedValue(TR::Node *ivLoad, TR::TreeTop *occurrenceTree);
 
-   TR::Block *createEmptyGoto(TR::Block *source, TR::Block *dest, TR::TreeTop *endTree);
+   TR::Block *createEmptyGoto(TR::Block *dest, TR::TreeTop *endTree);
    TR::Block *createClonedHeader(TR::Block *origHeader, TR::TreeTop **endTree);
    TR::Node *createSwitchNode(TR::Block *clonedHeader, TR::SymbolReference *tempSymRef, int32_t numCase);
    bool canPredictIters(TR_RegionStructure* whileLoop, const TR_ScratchList<TR::Block>& blocksInWhileLoop,
@@ -1105,8 +1107,7 @@ class TR_LoopVersioner : public TR_LoopTransformer
    TR_RegionStructure *_currentNaturalLoop;
 
    List<int32_t> _versionableInductionVariables, _specialVersionableInductionVariables, _derivedVersionableInductionVariables;
-   ////List<VirtualGuardPair> _virtualGuardPairs;
-   TR_LinkHead<VirtualGuardInfo> _virtualGuardInfo;
+   TR_LinkHead<ColdLoopVirtualGuardInfo> _virtualGuardInfo;
 
    bool _containsGuard, _containsUnguardedCall, _nonInlineGuardConditionalsWillNotBeEliminated;
 
