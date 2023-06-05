@@ -5611,10 +5611,8 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
    generateTrg1Src1ImmInstruction(cg, is64bit ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpli4, node, cr6Reg, lengthReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad8Label, cr6Reg);
 
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0x77);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::andc, node, tempReg, lengthReg, tempReg);
-   generateTrg1Src1ImmInstruction(cg, is64bit ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 8);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, skipLoad16Label, cr6Reg);
+   generateTrg1Src1ImmInstruction(cg, is64bit ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpli4, node, cr6Reg, lengthReg, 16);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad16Label, cr6Reg);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempReg, lengthReg, 4);
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, tempReg);
