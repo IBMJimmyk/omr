@@ -100,6 +100,7 @@
    cmpl8,            // Compare dword logical
    cmpli4,           // Compare word immediate logical
    cmpli8,           // Compare dword immediate logical
+   cmpb,             // Compare Bytes
    cmprb,            // Compare Ranged Byte
    cmpeqb,           // Compare Equal Byte
    cntlzd,           // Count leading zeros dword

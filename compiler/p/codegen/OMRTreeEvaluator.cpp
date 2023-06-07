@@ -5459,10 +5459,11 @@ static TR::Register *inlineLoop8ArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *load8LoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *load8DiffLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad8Label = generateLabelSymbol(cg);
-   TR::LabelSymbol *mismatchResidueLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *residueLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *returnTrueLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *returnVectorFalseLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *returnFalseLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
 
@@ -5494,19 +5495,27 @@ static TR::Register *inlineLoop8ArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, load8LoopLabel);
 
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, tempReg, offsetReg, src1AddrReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, tempReg2, offsetReg, src2AddrReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldbrx, node, tempReg, offsetReg, src1AddrReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldbrx, node, tempReg2, offsetReg, src2AddrReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr6Reg, tempReg, tempReg2);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, mismatchResidueLoopLabel, cr6Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, load8DiffLabel, cr6Reg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, offsetReg, offsetReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, load8LoopLabel, cr6Reg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, skipLoad8Label);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, load8DiffLabel);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpb, node, tempReg, tempReg, tempReg2);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, tempReg, tempReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, tempReg, tempReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempReg, tempReg, 3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, offsetReg, tempReg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, returnVectorFalseLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad8Label);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, lengthReg, offsetReg, lengthReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, returnTrueLabel, cr0Reg);
-
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, mismatchResidueLoopLabel);
 
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, lengthReg);
 
@@ -5527,6 +5536,11 @@ static TR::Register *inlineLoop8ArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, offsetReg, 0);
       generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, returnVectorFalseLabel);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, tempReg, offsetReg, src1AddrReg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, tempReg2, offsetReg, src2AddrReg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, tempReg2);
+
       generateLabelInstruction(cg, TR::InstOpCode::label, node, returnFalseLabel);
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, offsetReg, 1);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6Reg);
@@ -5535,6 +5549,7 @@ static TR::Register *inlineLoop8ArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
    else
       {
       generateLabelInstruction(cg, TR::InstOpCode::label, node, returnTrueLabel);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, returnVectorFalseLabel);
       generateLabelInstruction(cg, TR::InstOpCode::label, node, returnFalseLabel);
       }
 
@@ -5575,11 +5590,11 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *load16LoopLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *vectorDiffLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *load16DiffLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad16Label = generateLabelSymbol(cg);
    TR::LabelSymbol *load8LoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *load8DiffLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad8Label = generateLabelSymbol(cg);
-   TR::LabelSymbol *mismatchResidueLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *residueLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *returnTrueLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *returnVectorFalseLabel = generateLabelSymbol(cg);
@@ -5623,13 +5638,13 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vec2Reg, offsetReg, src2AddrReg);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmpequb_r, node, vec1Reg, vec1Reg, vec2Reg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, vectorDiffLabel, cr6Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, load16DiffLabel, cr6Reg);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, offsetReg, offsetReg, 16);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, load16LoopLabel, cr6Reg);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, skipLoad16Label);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorDiffLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, load16DiffLabel);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vec2Reg, -16);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vec1Reg, vec1Reg, vec2Reg);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vec2Reg, 8);
@@ -5661,19 +5676,27 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, load8LoopLabel);
 
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, tempReg, offsetReg, src1AddrReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, tempReg2, offsetReg, src2AddrReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldbrx, node, tempReg, offsetReg, src1AddrReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldbrx, node, tempReg2, offsetReg, src2AddrReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr6Reg, tempReg, tempReg2);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, mismatchResidueLoopLabel, cr6Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, load8DiffLabel, cr6Reg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, offsetReg, offsetReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, load8LoopLabel, cr6Reg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, skipLoad8Label);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, load8DiffLabel);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpb, node, tempReg, tempReg, tempReg2);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, tempReg, tempReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, tempReg, tempReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempReg, tempReg, 3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, offsetReg, tempReg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, returnVectorFalseLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad8Label);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, lengthReg, offsetReg, lengthReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, returnTrueLabel, cr0Reg);
-
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, mismatchResidueLoopLabel);
 
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, lengthReg);
 

@@ -993,6 +993,17 @@
    },
 
    {
+   /* .mnemonic    = */ OMR::InstOpCode::cmpb,
+   /* .name        = */ "cmpb",
+   /* .description =    "Compare Bytes", */
+   /* .prefix      = */ 0x00000000,
+   /* .opcode      = */ 0x7C0003F8,
+   /* .format      = */ FORMAT_RA_RS_RB,
+   /* .minimumALS  = */ OMR_PROCESSOR_PPC_P6,
+   /* .properties  = */ PPCOpProp_SyncSideEffectFree,
+   },
+
+   {
    /* .mnemonic    = */ OMR::InstOpCode::cmprb,
    /* .name        = */ "cmprb",
    /* .description =    "Compare Ranged Byte", */
