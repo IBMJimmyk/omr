@@ -5684,8 +5684,8 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vec1Reg, vec1Reg, vec2Reg);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vec1Reg, vec1Reg, vec1Reg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzd, node, vec1Reg, vec1Reg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrd, node, tempReg, vec1Reg);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempReg, tempReg, 3);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, offsetReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, is64bit ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 8);
@@ -5693,7 +5693,6 @@ static TR::Register *inlineVectorArrayCmp(TR::Node *node, TR::CodeGenerator *cg)
 
    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::xxpermdi, node, vec1Reg, vec1Reg, vec1Reg, 3);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrd, node, tempReg, vec1Reg);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempReg, tempReg, 3);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, offsetReg, tempReg);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, returnVectorFalseLabel);
