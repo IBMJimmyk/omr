@@ -8809,17 +8809,17 @@
    /*                   PPCOpProp_SyncSideEffectFree, */
    /* }, */
 
-   /* { */
-   /* .mnemonic    =    OMR::InstOpCode::vclzw, */
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::vclzw,
    /* .name        =    "vclzw", */
-   /* .description =    "Vector Count Leading Zeros Word", */
-   /* .prefix      =    0x00000000, */
-   /* .opcode      =    0x10000782, */
-   /* .format      =    FORMAT_UNKNOWN, */
-   /* .minimumALS  =    OMR_PROCESSOR_PPC_P8, */
-   /* .properties  =    PPCOpProp_IsVMX | */
-   /*                   PPCOpProp_SyncSideEffectFree, */
-   /* }, */
+   /* .description = */ "Vector Count Leading Zeros Word",
+   /* .prefix      = */ 0x00000000,
+   /* .opcode      = */ 0x10000782,
+   /* .format      = */ FORMAT_VRT_VRB,
+   /* .minimumALS  = */ OMR_PROCESSOR_PPC_P8,
+   /* .properties  = */ PPCOpProp_IsVMX |
+                        PPCOpProp_SyncSideEffectFree,
+   },
 
    /* { */
    /* .mnemonic    =    OMR::InstOpCode::vcmpbfp, */
