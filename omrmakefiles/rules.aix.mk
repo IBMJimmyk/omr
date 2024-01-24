@@ -46,7 +46,7 @@ GLOBAL_CPPFLAGS+=-D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DRS6000 -DAIXPPC -D_L
 
 ifeq (,$(findstring xlclang,$(notdir $(CC))))
   # xlc options
-  GLOBAL_CFLAGS+=-q mbcs -qlanglvl=extended -qinfo=pro
+  GLOBAL_CFLAGS+=-q mbcs -qlanglvl=extended -qinfo=pro -qnoeh
 else
   # xlclang options
   GLOBAL_CFLAGS+=-qlanglvl=extended0x -qxlcompatmacros
@@ -54,7 +54,7 @@ endif
 
 ifeq (,$(findstring xlclang++,$(notdir $(CXX))))
   # xlc++ options
-  GLOBAL_CXXFLAGS+=-q mbcs -qinfo=pro
+  GLOBAL_CXXFLAGS+=-q mbcs -qinfo=pro -qnoeh
 else
   # xlclang++ options
   GLOBAL_CXXFLAGS+=-qxlcompatmacros -fno-exceptions
