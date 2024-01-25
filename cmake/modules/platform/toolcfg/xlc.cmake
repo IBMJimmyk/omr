@@ -48,6 +48,7 @@ if(OMR_HOST_ARCH STREQUAL "ppc")
 	if(OMR_ENV_DATA64)
 		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 			-q64
+			-qnoeh
 		)
 	else()
 		# -qarch should be there for 32 and 64 C/CXX flags but the C compiler is used for the assembler and it has trouble with some assembly files if it is specified
@@ -99,9 +100,9 @@ if(OMR_OS_AIX)
 	set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} -lm -liconv -ldl -lperfstat")
 
 	if(OMR_ENV_DATA64)
-		set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -q64")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -q64")
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -q64")
+		set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -q64 -qnoeh")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -q64 -qnoeh")
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -q64 -qnoeh")
 
 		set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> -X64 cr <TARGET> <LINK_FLAGS> <OBJECTS>")
 		set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> -X64 cr <TARGET> <LINK_FLAGS> <OBJECTS>")

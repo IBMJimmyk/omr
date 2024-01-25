@@ -59,6 +59,7 @@ function(omr_compile_metalc mfile ofile)
 
 	if(OMR_ENV_DATA64)
 		list(APPEND OMR_METALC_XLC_FLAGS "-q64")
+		list(APPEND OMR_METALC_XLC_FLAGS "-qnoeh")
 	endif()
 
 	if(NOT IS_ABSOLUTE "${mfile}")
