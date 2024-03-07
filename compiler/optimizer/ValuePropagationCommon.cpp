@@ -4311,6 +4311,14 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
    TR::TreeTop *ifTreeb = TR::TreeTop::create(comp(), TR::Node::createif(TR::ificmpgt, child1b, child2b));
    createAndInsertTestBlock(comp(),ifTreeb,callTree, origCallBlock,slowArraytranslateBlock);
 
+   // Negative check on dstOff. It must be 0 or more.
+   TR::TreeTop *ifTreee = TR::TreeTop::create(comp(), TR::Node::createif(TR::ificmplt, TR::Node::createLoad(callNode, dstOffRef), TR::Node::iconst(callNode,0)));
+   createAndInsertTestBlock(comp(), ifTreee, callTree, origCallBlock, slowArraytranslateBlock);
+
+   // Negative check on srcOff. It must be 0 or more.
+   TR::TreeTop *ifTreef = TR::TreeTop::create(comp(), TR::Node::createif(TR::ificmplt, TR::Node::createLoad(callNode, srcOffRef), TR::Node::iconst(callNode,0)));
+   createAndInsertTestBlock(comp(), ifTreef, callTree, origCallBlock, slowArraytranslateBlock);
+
    // Null check on source
    TR::TreeTop *ifTreec = TR::TreeTop::create(comp(), TR::Node::createif(TR::ifacmpeq, TR::Node::createLoad(callNode, srcRef), TR::Node::aconst(callNode,0)));
    createAndInsertTestBlock(comp(), ifTreec, callTree, origCallBlock, slowArraytranslateBlock);
