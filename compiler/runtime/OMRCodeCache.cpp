@@ -630,6 +630,11 @@ OMR::CodeCache::replaceTrampoline(TR_OpaqueMethodBlock *method,
    //suspicious that this assertion is commented out...
    //TR_ASSERT(entry);
 
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz replaceTrampoline - method: %p, entry: %p", method, entry);
+      }
+
    if (oldTrampoline == NULL)
       {
       // A trampoline has not been created.  Simply allocate a new one.
@@ -933,6 +938,10 @@ OMR::CodeCache::addResolvedMethod(TR_OpaqueMethodBlock *method)
    entry->_info._resolved._method = method;
    entry->_info._resolved._currentStartPC = NULL;
    entry->_info._resolved._currentTrampoline = NULL;
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz addResolvedMethod - method: %p, entry: %p", method, entry);
+      }
    _resolvedMethodHT->add(entry);
    return true;
    }
