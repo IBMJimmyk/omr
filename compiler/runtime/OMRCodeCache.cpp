@@ -131,6 +131,10 @@ OMR::CodeCache::destroy(TR::CodeCacheManager *manager)
       {
       if (_resolvedMethodHT)
          {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz destroy - _resolvedMethodHT: %p", _resolvedMethodHT);
+            }
          if (_resolvedMethodHT->_buckets)
             manager->freeMemory(_resolvedMethodHT->_buckets);
          manager->freeMemory(_resolvedMethodHT);
@@ -401,6 +405,10 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
          {
          // Initialize hashtables to hold trampolines for resolved and unresolved methods
          _resolvedMethodHT   = CodeCacheHashTable::allocate(manager);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz initialize - _resolvedMethodHT: %p", _resolvedMethodHT);
+            }
          _unresolvedMethodHT = CodeCacheHashTable::allocate(manager);
          if (_resolvedMethodHT==NULL || _unresolvedMethodHT==NULL)
             {
@@ -586,6 +594,10 @@ OMR::CodeCache::findTrampoline(TR_OpaqueMethodBlock * method)
       CacheCriticalSection resolveAndCreateTrampoline(self());
 
       CodeCacheHashEntry *entry = _resolvedMethodHT->findResolvedMethod(method);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz findTrampoline - _resolvedMethodHT: %p, method: %p, entry: %p", _resolvedMethodHT, method, entry);
+         }
       trampoline = entry->_info._resolved._currentTrampoline;
       if (!trampoline)
          {
@@ -644,6 +656,7 @@ OMR::CodeCache::replaceTrampoline(TR_OpaqueMethodBlock *method,
       // A trampoline has not been created.  Simply allocate a new one.
       //
       trampoline = self()->allocateTrampoline();
+      TR_ASSERT_FATAL(entry, "replaceTrampoline - null entry - _resolvedMethodHT: %p, method: %p, entry: %p",  _resolvedMethodHT, method, entry);
       entry->_info._resolved._currentTrampoline = trampoline;
       }
    else
@@ -685,6 +698,10 @@ OMR::CodeCache::syncTempTrampolines()
    {
    if (_flags & CODECACHE_FULL_SYNC_REQUIRED)
       {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz syncTempTrampolines - _resolvedMethodHT: %p", _resolvedMethodHT);
+         }
       for (uint32_t entryIdx = 0; entryIdx < _resolvedMethodHT->_size; entryIdx++)
          {
          for (CodeCacheHashEntry *entry = _resolvedMethodHT->_buckets[entryIdx]; entry; entry = entry->_next)
@@ -759,6 +776,10 @@ OMR::CodeCache::patchCallPoint(TR_OpaqueMethodBlock *method,
       if (config.needsMethodTrampolines())
          {
          CodeCacheHashEntry *entry = _resolvedMethodHT->findResolvedMethod(method);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz patchCallPoint - _resolvedMethodHT: %p, method: %p, entry: %p", _resolvedMethodHT, method, entry);
+            }
 
          if (entry)
             {
