@@ -551,6 +551,10 @@ OMR::CodeCache::reserveResolvedTrampoline(TR_OpaqueMethodBlock *method,
       // see if a reservation for this method already exists, return corresponding
       // code cache if thats the case
       CodeCacheHashEntry *entry = _resolvedMethodHT->findResolvedMethod(method);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz reserveResolvedTrampoline - _resolvedMethodHT: %p, method: %p, entry: %p", _resolvedMethodHT, method, entry);
+         }
       if (!entry)
          {
          // Reserve a new trampoline since there is not an active reservation for given method
@@ -632,7 +636,7 @@ OMR::CodeCache::replaceTrampoline(TR_OpaqueMethodBlock *method,
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz replaceTrampoline - method: %p, entry: %p", method, entry);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz replaceTrampoline - _resolvedMethodHT: %p, method: %p, entry: %p", _resolvedMethodHT, method, entry);
       }
 
    if (oldTrampoline == NULL)
@@ -931,6 +935,10 @@ bool
 OMR::CodeCache::addResolvedMethod(TR_OpaqueMethodBlock *method)
    {
    CodeCacheHashEntry *entry = self()->allocateHashEntry();
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz addResolvedMethod - _resolvedMethodHT: %p, method: %p, entry: %p", _resolvedMethodHT, method, entry);
+      }
    if (!entry)
       return false;
 
@@ -938,10 +946,6 @@ OMR::CodeCache::addResolvedMethod(TR_OpaqueMethodBlock *method)
    entry->_info._resolved._method = method;
    entry->_info._resolved._currentStartPC = NULL;
    entry->_info._resolved._currentTrampoline = NULL;
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
-      {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "zzz addResolvedMethod - method: %p, entry: %p", method, entry);
-      }
    _resolvedMethodHT->add(entry);
    return true;
    }
