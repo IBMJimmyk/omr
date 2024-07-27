@@ -656,7 +656,6 @@ OMR::CodeCache::replaceTrampoline(TR_OpaqueMethodBlock *method,
       // A trampoline has not been created.  Simply allocate a new one.
       //
       trampoline = self()->allocateTrampoline();
-      TR_ASSERT_FATAL(entry, "replaceTrampoline - null entry - _resolvedMethodHT: %p, method: %p, entry: %p",  _resolvedMethodHT, method, entry);
       entry->_info._resolved._currentTrampoline = trampoline;
       }
    else
