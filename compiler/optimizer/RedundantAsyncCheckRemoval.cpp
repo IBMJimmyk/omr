@@ -428,11 +428,9 @@ bool TR_RedundantAsyncCheckRemoval::callDoesAnImplicitAsyncCheck(TR::Node *callN
    // sun.misc.Unsafe wrappers and the jdk.internal.misc.Unsafe JNI methods, so
    // for these we need to do an additional test to check if they are the native
    // versions or not.
-   if (symbol->isNative() &&
-       ((symbol->getRecognizedMethod()==TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z) ||
+   if ((symbol->getRecognizedMethod()==TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z) ||
        (symbol->getRecognizedMethod()==TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z) ||
        (symbol->getRecognizedMethod()==TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z))
-      )
       return false;
 #endif
    return true;

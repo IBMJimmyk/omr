@@ -720,8 +720,6 @@ static bool willNotInlineCompareAndSwapNative(TR::Node *node,
    // not be converting to assembly), the new jdk.internal JNI methods or the
    // Java8 sun.misc JNI methods (both of which we will convert). We can
    // differentiate between these cases by testing with isNative() on the method.
-   if (!methodSymbol->isNative())
-      return true;
 
    if (size == 4)
       {
