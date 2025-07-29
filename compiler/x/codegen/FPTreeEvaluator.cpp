@@ -555,7 +555,12 @@ TR::Register *OMR::X86::TreeEvaluator::dsqrtEvaluator(TR::Node *node, TR::CodeGe
    TR::Register *opRegister = cg->evaluate(operand);
    TR::Register *targetRegister = cg->allocateRegister(TR_FPR);
 
-   generateRegRegInstruction(TR::InstOpCode::SQRTSDRegReg, node, targetRegister, opRegister, cg);
+   static int32_t multiSqrtCount = feGetEnv("TR_MultiSqrtCount")? atoi(feGetEnv("TR_MultiSqrtCount")) : 1;
+
+   for (int32_t i = 0; i < multiSqrtCount; i++)
+      {
+      generateRegRegInstruction(TR::InstOpCode::SQRTSDRegReg, node, targetRegister, opRegister, cg);
+      }
 
    node->setRegister(targetRegister);
    cg->decReferenceCount(operand);
