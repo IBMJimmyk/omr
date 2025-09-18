@@ -2602,6 +2602,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
 
     auto gcMode = TR::Compiler->om.writeBarrierType();
 
+    doOpt = false;
     if (doOpt && ((gcMode == gc_modron_wrtbar_cardmark_and_oldcheck) || (gcMode == gc_modron_wrtbar_oldcheck))
         && (node->getOpCodeValue() == TR::awrtbari) && !node->skipWrtBar()) {
         TR::Node *valueChild = node->getFirstChild();
