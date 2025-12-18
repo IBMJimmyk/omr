@@ -57,7 +57,7 @@ TR_LiveRegisterInfo *TR_LiveRegisters::addRegister(TR::Register *reg, bool updat
 
     entry->initialize(reg);
 
-    comp()->log()->printf("zzz addRegister - reg: %p, entry: %p, node: %p, kind: %d\n", reg, entry, cg()->getCurrentEvaluationTreeTop()->getNode(), reg->getKind());
+    comp()->log()->printf("zzz addRegister - reg: %p, entry: %p, kind: %d\n", reg, entry, reg->getKind());
     reg->setLiveRegisterInfo(entry);
 
     // Add the entry to the live register chain
@@ -184,7 +184,7 @@ void TR_LiveRegisters::registerIsDead(TR::Register *reg, bool updateInterference
         //
         _numLiveRegisters++;
     } else {
-        comp()->log()->printf("zzz registerIsDead - reg: %p, interference: %d, node: %p, kind: %d\n", reg, liveReg->getInterference(), cg()->getCurrentEvaluationTreeTop()->getNode(), reg->getKind());
+        comp()->log()->printf("zzz registerIsDead - reg: %p, interference: %d, kind: %d\n", reg, liveReg->getInterference(), reg->getKind());
         reg->setInterference(liveReg->getInterference());
 
         // If this register is associated with a real register, the real register
