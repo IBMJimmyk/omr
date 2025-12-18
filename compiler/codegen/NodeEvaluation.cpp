@@ -354,10 +354,10 @@ rcount_t OMR::CodeGenerator::decReferenceCount(TR::Node *node)
             pair->getLowOrder()->getLiveRegisterInfo()->decNodeCount();
         }
 
-        self()->comp()->log()->printf("zzz decReferenceCount live reg - reg: %p, node: %p, liveRegister: %p, regIsAlive: %d\n", reg, node, liveRegister, reg->isLive());
+        //self()->comp()->log()->printf("zzz decReferenceCount live reg - reg: %p, node: %p, liveRegister: %p, regIsAlive: %d\n", reg, node, liveRegister, reg->isLive());
 
         if (liveRegister && liveRegister->decNodeCount() == 0) {
-            self()->comp()->log()->printf("zzz decReferenceCount kill Reg - reg: %p, node: %p, liveRegister: %p, regIsAlive: %d\n", reg, node, liveRegister, reg->isLive());
+            //self()->comp()->log()->printf("zzz decReferenceCount kill Reg - reg: %p, node: %p, liveRegister: %p, regIsAlive: %d\n", reg, node, liveRegister, reg->isLive());
             // The register is now dead
             //
             self()->getLiveRegisters(reg->getKind())->registerIsDead(reg);
