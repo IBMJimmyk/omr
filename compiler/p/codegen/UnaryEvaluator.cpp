@@ -591,10 +591,10 @@ TR::Register *OMR::Power::TreeEvaluator::su2lEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::bu2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
-    cg->comp()->log()->printf("zzz bu2iEvaluator start - node: %p, child: %p\n", node, child);
-
     TR::Node *child = node->getFirstChild();
     TR::Register *trgReg;
+
+    cg->comp()->log()->printf("zzz bu2iEvaluator start - node: %p, child: %p\n", node, child);
 
     if (child->getReferenceCount() == 1 && child->getOpCode().isMemoryReference() && (child->getRegister() == NULL)) {
         cg->comp()->log()->printf("zzz bu2iEvaluator eval child start 1 - node: %p, child: %p\n", node, child);
