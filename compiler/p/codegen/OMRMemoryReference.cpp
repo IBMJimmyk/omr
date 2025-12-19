@@ -198,6 +198,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *rootLoadOrStore, uint32_t
     , _staticRelocation(NULL)
     , _label(NULL)
 {
+    cg->comp()->log()->printf("zzz MemoryReference start - node: %p\n", rootLoadOrStore);
     TR::Compilation *comp = cg->comp();
     TR::SymbolReference *ref = rootLoadOrStore->getSymbolReference();
     TR::Symbol *symbol = ref->getSymbol();
@@ -232,7 +233,9 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *rootLoadOrStore, uint32_t
             if (symbol->isMethodMetaData()) {
                 _baseRegister = cg->getMethodMetaDataRegister();
             }
+            cg->comp()->log()->printf("zzz MemoryReference call populateMemoryReference - node: %p, base: %p\n", rootLoadOrStore, base);
             self()->populateMemoryReference(base, cg);
+            cg->comp()->log()->printf("zzz MemoryReference return populateMemoryReference - node: %p, base: %p\n", rootLoadOrStore, base);
         }
     } else {
         if (symbol->isStatic()) {
@@ -251,6 +254,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *rootLoadOrStore, uint32_t
     if (self()->getUnresolvedSnippet() != NULL)
         self()->adjustForResolution(cg);
     // TODO: aliasing sets?
+    cg->comp()->log()->printf("zzz MemoryReference end - node: %p\n", rootLoadOrStore);
 }
 
 OMR::Power::MemoryReference::MemoryReference(TR::Node *node, TR::SymbolReference *symRef, uint32_t len,
@@ -552,6 +556,7 @@ static bool isLoadConstAndShift(TR::Node *subTree, TR::CodeGenerator *cg)
 
 void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz populateMemoryReference start - node: %p\n", subTree);
     if (cg->comp()->useCompressedPointers()) {
         if ((subTree->getOpCodeValue() == TR::l2a) && (subTree->getReferenceCount() == 1)
             && (subTree->getRegister() == NULL)
@@ -578,6 +583,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
     }
 
     if (subTree->getReferenceCount() > 1 || subTree->getRegister() != NULL) {
+        cg->comp()->log()->printf("zzz populateMemoryReference checkpoint1 - node: %p\n", subTree);
         if (_baseRegister != NULL) {
             self()->consolidateRegisters(cg->evaluate(subTree), subTree, false, cg);
         } else {
@@ -585,8 +591,10 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
             _baseNode = subTree;
         }
     } else {
+        cg->comp()->log()->printf("zzz populateMemoryReference checkpoint2 - node: %p\n", subTree);
         if (subTree->getOpCode().isArrayRef()
             || (subTree->getOpCodeValue() == TR::iadd || subTree->getOpCodeValue() == TR::ladd)) {
+            cg->comp()->log()->printf("zzz populateMemoryReference checkpoint3 - node: %p\n", subTree);
             TR::Node *addressChild = subTree->getFirstChild();
             TR::Node *integerChild = subTree->getSecondChild();
 
@@ -609,6 +617,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
             }
             cg->decReferenceCount(subTree);
         } else if (isLoadConstAndShift(subTree, cg)) {
+            cg->comp()->log()->printf("zzz populateMemoryReference checkpoint4 - node: %p\n", subTree);
             if (cg->comp()->target().is64Bit()) { // 64-bit
                 int64_t amount = (subTree->getSecondChild()->getOpCodeValue() == TR::iconst)
                     ? subTree->getSecondChild()->getInt()
@@ -633,6 +642,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
             cg->decReferenceCount(subTree->getFirstChild());
             cg->decReferenceCount(subTree->getSecondChild());
         } else if ((subTree->getOpCodeValue() == TR::loadaddr) && !cg->comp()->compileRelocatableCode()) {
+            cg->comp()->log()->printf("zzz populateMemoryReference checkpoint5 - node: %p\n", subTree);
             TR::SymbolReference *ref = subTree->getSymbolReference();
             TR::Symbol *symbol = ref->getSymbol();
             bool isStore = subTree->getOpCode().isStore();
@@ -669,19 +679,24 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
         } else if (subTree->getOpCodeValue() == TR::aconst || subTree->getOpCodeValue() == TR::iconst
             || // subTree->getOpCode().isLoadConst ?
             subTree->getOpCodeValue() == TR::lconst) {
+            cg->comp()->log()->printf("zzz populateMemoryReference checkpoint6 - node: %p\n", subTree);
             int64_t amount = (subTree->getOpCodeValue() == TR::iconst) ? subTree->getInt() : subTree->getLongInt();
             self()->addToOffset(subTree, amount, cg);
         } else {
+            cg->comp()->log()->printf("zzz populateMemoryReference checkpoint7 - node: %p\n", subTree);
             if (_baseRegister != NULL) {
                 self()->consolidateRegisters(cg->evaluate(subTree), subTree, cg->canClobberNodesRegister(subTree), cg);
             } else {
+                cg->comp()->log()->printf("zzz populateMemoryReference checkpoint8 - node: %p\n", subTree);
                 _baseRegister = cg->evaluate(subTree);
+                cg->comp()->log()->printf("zzz populateMemoryReference checkpoint9 - node: %p\n", subTree);
                 _baseNode = subTree;
                 if (cg->canClobberNodesRegister(subTree))
                     self()->setBaseModifiable();
             }
         }
     }
+    cg->comp()->log()->printf("zzz populateMemoryReference end - node: %p\n", subTree);
 }
 
 void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR::Node *srcTree, bool srcModifiable,
