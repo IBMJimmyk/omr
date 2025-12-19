@@ -99,10 +99,13 @@ void OMR::Power::LoadStoreHandler::generateLoadNodeSequence(TR::CodeGenerator *c
     TR_ASSERT_FATAL_WITH_NODE(node, node->getOpCode().isLoadVar(),
         "Attempt to use generateLoadNodeSequence for non-load node");
 
+    cg->comp()->log()->printf("zzz generateLoadNodeSequence start - node: %p\n", node);
     auto ref = TR::LoadStoreHandlerImpl::generateMemoryReference(cg, node, length, requireIndexForm, extraOffset);
 
     TR::LoadStoreHandlerImpl::generateLoadSequence(cg, trgReg, node, ref.getMemoryReference(), loadOp);
+    cg->comp()->log()->printf("zzz generateLoadNodeSequence dec RefCount - node: %p\n", node);
     ref.decReferenceCounts(cg);
+    cg->comp()->log()->printf("zzz generateLoadNodeSequence end - node: %p\n", node);
 }
 
 void OMR::Power::LoadStoreHandler::generatePairedLoadNodeSequence(TR::CodeGenerator *cg, TR::Register *trgReg,

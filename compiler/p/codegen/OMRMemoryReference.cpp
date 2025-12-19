@@ -477,22 +477,30 @@ void OMR::Power::MemoryReference::adjustForResolution(TR::CodeGenerator *cg)
 
 void OMR::Power::MemoryReference::decNodeReferenceCounts(TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz MR decNodeReferenceCounts start - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
+
     if (_baseRegister != NULL) {
         if (_baseNode != NULL) {
+            cg->comp()->log()->printf("zzz MR decNodeReferenceCounts decbase before - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
             cg->decReferenceCount(_baseNode);
+            cg->comp()->log()->printf("zzz MR decNodeReferenceCounts decbase after - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
         } else
             cg->stopUsingRegister(_baseRegister);
     }
 
     if (_indexRegister != NULL) {
-        if (_indexNode != NULL)
+        if (_indexNode != NULL) {
+            cg->comp()->log()->printf("zzz MR decNodeReferenceCounts decindex before - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
             cg->decReferenceCount(_indexNode);
-        else
+            cg->comp()->log()->printf("zzz MR decNodeReferenceCounts decindex after - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
+        } else
             cg->stopUsingRegister(_indexRegister);
     }
 
     if (_modBase != NULL)
         cg->stopUsingRegister(_modBase);
+
+    cg->comp()->log()->printf("zzz MR decNodeReferenceCounts end - _baseNode: %p, _indexNode: %p\n", _baseNode, _indexNode);
 }
 
 void OMR::Power::MemoryReference::bookKeepingRegisterUses(TR::Instruction *instr, TR::CodeGenerator *cg)

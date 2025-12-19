@@ -2944,10 +2944,12 @@ TR::Register *OMR::Power::TreeEvaluator::lloadEvaluator(TR::Node *node, TR::Code
 // Also handles bloadi
 TR::Register *OMR::Power::TreeEvaluator::bloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz bloadEvaluator start - node: %p\n", node);
     TR::Register *trgReg = cg->allocateRegister();
     TR::LoadStoreHandler::generateLoadNodeSequence(cg, trgReg, node, TR::InstOpCode::lbz, 1);
 
     node->setRegister(trgReg);
+    cg->comp()->log()->printf("zzz bloadEvaluator end - node: %p\n", node);
     return trgReg;
 }
 

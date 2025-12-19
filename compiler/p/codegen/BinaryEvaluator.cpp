@@ -363,7 +363,7 @@ TR::Register *OMR::Power::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeG
     bool setsOrReadsCC = NEED_CC(node) || (node->getOpCodeValue() == TR::luaddc);
     TR::InstOpCode::Mnemonic regToRegOpCode = TR::InstOpCode::addc;
 
-    cg->comp()->log()->printf("zzz laddEvaluator start - node %p, firstChild: %p, secondChild: %p\n");
+    cg->comp()->log()->printf("zzz laddEvaluator start - node: %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
 
     if (cg->comp()->target().is32Bit()) {
         if (!setsOrReadsCC && secondOp == TR::lconst && secondChild->getRegister() == NULL) {
@@ -434,10 +434,10 @@ TR::Register *OMR::Power::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeG
             cg->decReferenceCount(firstChild->getSecondChild());
         } else {
 
-            cg->comp()->log()->printf("zzz laddEvaluator eval firstChild start - node: %p, firstChild: %p, secondChild: %p\n");
+            cg->comp()->log()->printf("zzz laddEvaluator eval firstChild start - node: %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
 
             src1Reg = cg->evaluate(firstChild);
-            cg->comp()->log()->printf("zzz laddEvaluator eval firstChild end - node: %p, firstChild: %p, secondChild: %p\n");
+            cg->comp()->log()->printf("zzz laddEvaluator eval firstChild end - node: %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
 
             if (!setsOrReadsCC && secondOp == TR::lconst && secondChild->getRegister() == NULL) {
                 trgReg = addConstantToLong(node, src1Reg, secondChild->getLongInt(), trgReg, cg);
@@ -449,9 +449,9 @@ TR::Register *OMR::Power::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeG
                 trgReg = addConstantToLong(node, src1Reg, (int64_t)secondChild->getInt(), trgReg, cg);
             } else {
                 if (!hasCompressedPointers) {
-                    cg->comp()->log()->printf("zzz laddEvaluator eval secondChild start - node: %p, firstChild: %p, secondChild: %p\n");
+                    cg->comp()->log()->printf("zzz laddEvaluator eval secondChild start - node: %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
                     src2Reg = cg->evaluate(secondChild);
-                    cg->comp()->log()->printf("zzz laddEvaluator eval secondChild end - node: %p, firstChild: %p, secondChild: %p\n");
+                    cg->comp()->log()->printf("zzz laddEvaluator eval secondChild end - node: %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
                     trgReg = cg->allocateRegister();
                 }
 
@@ -514,10 +514,10 @@ TR::Register *OMR::Power::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeG
     }
 
     node->setRegister(trgReg);
-    cg->comp()->log()->printf("zzz laddEvaluator decrefcount - node %p, firstChild: %p, secondChild: %p\n");
+    cg->comp()->log()->printf("zzz laddEvaluator decrefcount - node %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
     cg->decReferenceCount(firstChild);
     cg->decReferenceCount(secondChild);
-    cg->comp()->log()->printf("zzz laddEvaluator end - node %p, firstChild: %p, secondChild: %p\n");
+    cg->comp()->log()->printf("zzz laddEvaluator end - node %p, firstChild: %p, secondChild: %p\n", node, firstChild, secondChild);
     return trgReg;
 }
 
