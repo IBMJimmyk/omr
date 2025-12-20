@@ -702,15 +702,18 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
 void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR::Node *srcTree, bool srcModifiable,
     TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz consolidateRegisters start - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
     TR::Register *tempTargetRegister;
     TR::Compilation *comp = cg->comp();
 
     TR::Node *tempNode = (srcTree == NULL) ? cg->getAppendInstruction()->getNode() : srcTree;
 
     if (self()->getUnresolvedSnippet() != NULL) {
+        cg->comp()->log()->printf("zzz consolidateRegisters checkpoint1 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
         if (srcReg == NULL)
             return;
         if (_indexRegister != NULL) {
+            cg->comp()->log()->printf("zzz consolidateRegisters checkpoint2 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
             if (self()->isIndexModifiable())
                 tempTargetRegister = _indexRegister;
             else if ((srcReg && (srcReg->containsCollectedReference() || srcReg->containsInternalPointer()))
@@ -728,15 +731,18 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
 
             generateTrg1Src2Instruction(cg, TR::InstOpCode::add, tempNode, tempTargetRegister, _indexRegister, srcReg);
             if (_indexRegister != tempTargetRegister) {
-                if (_indexNode != NULL)
+                cg->comp()->log()->printf("zzz consolidateRegisters checkpoint3 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
+                if (_indexNode != NULL) {
+                    cg->comp()->log()->printf("zzz consolidateRegisters decref1 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
                     cg->decReferenceCount(_indexNode);
-                else
+                } else
                     cg->stopUsingRegister(_indexRegister);
                 _indexNode = NULL;
             }
-            if (srcTree != NULL)
+            if (srcTree != NULL) {
+                cg->comp()->log()->printf("zzz consolidateRegisters decref2 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
                 cg->decReferenceCount(srcTree);
-            else
+            } else
                 cg->stopUsingRegister(srcReg);
             _indexRegister = tempTargetRegister;
             self()->setIndexModifiable();
@@ -749,7 +755,9 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
                 self()->clearIndexModifiable();
         }
     } else {
+        cg->comp()->log()->printf("zzz consolidateRegisters checkpoint4 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
         if (_indexRegister != NULL) {
+            cg->comp()->log()->printf("zzz consolidateRegisters checkpoint5 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
             if (self()->isBaseModifiable())
                 tempTargetRegister = _baseRegister;
             else if ((_baseRegister
@@ -772,14 +780,16 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
                 self()->decNodeReferenceCounts(cg);
                 _baseNode = NULL;
             } else {
-                if (_indexNode != NULL)
+                if (_indexNode != NULL) {
+                    cg->comp()->log()->printf("zzz consolidateRegisters decref3 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
                     cg->decReferenceCount(_indexNode);
-                else
+                } else
                     cg->stopUsingRegister(_indexRegister);
             }
             _baseRegister = tempTargetRegister;
             self()->setBaseModifiable();
         } else if (srcReg != NULL && (self()->getOffset(*comp) != 0 || self()->hasDelayedOffset())) {
+            cg->comp()->log()->printf("zzz consolidateRegisters checkpoint6 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
             if (self()->isBaseModifiable())
                 tempTargetRegister = _baseRegister;
             else if (srcModifiable)
@@ -806,9 +816,10 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
                 self()->decNodeReferenceCounts(cg);
                 _baseNode = srcTree;
             } else {
-                if (srcTree != NULL)
+                if (srcTree != NULL) {
+                    cg->comp()->log()->printf("zzz consolidateRegisters decref4 - srcTree: %p, _indexNode: %p\n", srcTree, _indexNode);
                     cg->decReferenceCount(srcTree);
-                else
+                } else
                     cg->stopUsingRegister(srcReg);
             }
             _baseRegister = tempTargetRegister;
@@ -824,6 +835,7 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
         else
             self()->clearIndexModifiable();
     }
+    cg->comp()->log()->printf("zzz consolidateRegisters end - srcTree: %p\n", srcTree);
 }
 
 void OMR::Power::MemoryReference::assignRegisters(TR::Instruction *currentInstruction, TR::CodeGenerator *cg)
