@@ -537,6 +537,7 @@ static bool isLoadConstAndShift(TR::Node *subTree, TR::CodeGenerator *cg)
             //       iconst
             //    iconst
             else if (subTree->getFirstChild()->getOpCodeValue() == TR::i2l
+                && 1 == subTree->getFirstChild()->getReferenceCount()
                 && subTree->getFirstChild()->getFirstChild()->getOpCode().isLoadConst()
                 && subTree->getSecondChild()->getOpCode().isLoadConst())
                 return true;
@@ -641,6 +642,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
                     cg);
             cg->decReferenceCount(subTree->getFirstChild());
             cg->decReferenceCount(subTree->getSecondChild());
+            cg->decReferenceCount(subTree);
         } else if ((subTree->getOpCodeValue() == TR::loadaddr) && !cg->comp()->compileRelocatableCode()) {
             cg->comp()->log()->printf("zzz populateMemoryReference checkpoint5 - node: %p\n", subTree);
             TR::SymbolReference *ref = subTree->getSymbolReference();
