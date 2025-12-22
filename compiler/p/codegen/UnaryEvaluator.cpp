@@ -52,8 +52,10 @@ class TR_OpaqueMethodBlock;
 
 TR::Register *OMR::Power::TreeEvaluator::iconstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz iconstEvaluator start - node: %p\n", node);
     TR::Register *tempReg = node->setRegister(cg->allocateRegister());
     loadConstant(cg, node, (int32_t)node->get64bitIntegralValue(), tempReg);
+    cg->comp()->log()->printf("zzz iconstEvaluator end - node: %p\n", node);
     return tempReg;
 }
 
@@ -332,6 +334,7 @@ TR::Register *i2l32Evaluator(TR::Node *node, TR::CodeGenerator *cg)
 
 TR::Register *OMR::Power::TreeEvaluator::i2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz i2lEvaluator start - node: %p, first child: %p\n", node, node->getFirstChild());
     if (!cg->comp()->target().is64Bit())
         return i2l32Evaluator(node, cg);
 
@@ -341,7 +344,9 @@ TR::Register *OMR::Power::TreeEvaluator::i2lEvaluator(TR::Node *node, TR::CodeGe
     generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, trgReg, srcReg);
 
     node->setRegister(trgReg);
+    cg->comp()->log()->printf("zzz i2lEvaluator decRef - node: %p, first child: %p\n", node, node->getFirstChild());
     cg->decReferenceCount(node->getFirstChild());
+    cg->comp()->log()->printf("zzz i2lEvaluator end - node: %p, first child: %p\n", node, node->getFirstChild());
     return trgReg;
 }
 

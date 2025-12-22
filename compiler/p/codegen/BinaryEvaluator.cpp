@@ -2103,12 +2103,14 @@ static uint64_t getExtensionMask(TR::ILOpCode op)
 
 static TR::Register *integerShiftLeft(TR::Node *node, uint32_t operandSize, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz integerShiftLeft start - node: %p\n", node);
     uint32_t operandBits = operandSize * 8;
     uint64_t operandMask = operandBits == 64 ? 0xffffffffffffffffULL : ((1ULL << operandBits) - 1);
 
     TR::Register *trg = cg->allocateRegister();
 
     if (node->getSecondChild()->getOpCode().isLoadConst()) {
+        cg->comp()->log()->printf("zzz integerShiftLeft checkpoint1 - node: %p\n", node);
         int32_t rhs = node->getSecondChild()->getInt() & (operandBits > 32 ? 0x3f : 0x1f);
 
         // If the value being shifted was just zero-extended (or sign-extended and it is guaranteed to
@@ -2116,6 +2118,7 @@ static TR::Register *integerShiftLeft(TR::Node *node, uint32_t operandSize, TR::
         // rlwinm instruction. Similarly, if the value being shifted was just sign-extended from an
         // integer to a long, a POWER 9 extswsli instruction can be used to perform both operations.
         if (isZeroExtendThenShiftLeftCandidate(cg, node)) {
+            cg->comp()->log()->printf("zzz integerShiftLeft checkpoint2 - node: %p\n", node);
             TR::Register *lhs = cg->evaluate(node->getFirstChild()->getFirstChild());
             uint64_t mask = getExtensionMask(node->getFirstChild()->getOpCode()) << rhs;
 
@@ -2128,12 +2131,14 @@ static TR::Register *integerShiftLeft(TR::Node *node, uint32_t operandSize, TR::
 
             cg->decReferenceCount(node->getFirstChild()->getFirstChild());
         } else if (isPower9Extswsli(cg, node)) {
+            cg->comp()->log()->printf("zzz integerShiftLeft checkpoint3 - node: %p\n", node);
             TR::Register *lhs = cg->evaluate(node->getFirstChild()->getFirstChild());
 
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::extswsli, node, trg, lhs, rhs);
 
             cg->decReferenceCount(node->getFirstChild()->getFirstChild());
         } else {
+            cg->comp()->log()->printf("zzz integerShiftLeft checkpoint4 - node: %p\n", node);
             TR::Register *lhs = cg->evaluate(node->getFirstChild());
             uint64_t mask = operandMask << rhs;
 
@@ -2145,6 +2150,7 @@ static TR::Register *integerShiftLeft(TR::Node *node, uint32_t operandSize, TR::
                 generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, trg, lhs, rhs, mask);
         }
     } else {
+        cg->comp()->log()->printf("zzz integerShiftLeft checkpoint5 - node: %p\n", node);
         TR::Register *lhs = cg->evaluate(node->getFirstChild());
         TR::Register *rhs = cg->evaluate(node->getSecondChild());
 
@@ -2155,9 +2161,12 @@ static TR::Register *integerShiftLeft(TR::Node *node, uint32_t operandSize, TR::
     }
 
     node->setRegister(trg);
+    cg->comp()->log()->printf("zzz integerShiftLeft decRef 1 - node: %p, firstChild: %p\n", node, node->getFirstChild());
     cg->decReferenceCount(node->getFirstChild());
+    cg->comp()->log()->printf("zzz integerShiftLeft decRef 2 - node: %p, secondChild: %p\n", node, node->getSecondChild());
     cg->decReferenceCount(node->getSecondChild());
 
+    cg->comp()->log()->printf("zzz integerShiftLeft end - node: %p\n", node);
     return trg;
 }
 
@@ -2276,10 +2285,12 @@ TR::Register *OMR::Power::TreeEvaluator::ishlEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::lshlEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
+    cg->comp()->log()->printf("zzz lshlEvaluator start - node: %p\n", node);
     if (cg->comp()->target().is64Bit())
         return integerShiftLeft(node, 8, cg);
     else
         return lshl32Evaluator(node, cg);
+    cg->comp()->log()->printf("zzz lshlEvaluator end - node: %p\n", node);
 }
 
 static bool isMaskThenShiftRightCandidate(TR::CodeGenerator *cg, TR::Node *node, uint32_t operandBits,
