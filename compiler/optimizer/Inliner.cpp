@@ -1689,13 +1689,14 @@ TR::TreeTop *TR_InlinerBase::addGuardForVirtual(TR::ResolvedMethodSymbol *caller
                 guard)));
 
     static const char *disableHCRGuards = feGetEnv("TR_DisableHCRGuards");
+    static const char *disableHCRGuardsInInliner = feGetEnv("TR_DisableHCRGuardsInInliner");
 
     const bool skipHCRGuardForCallee = getPolicy()->skipHCRGuardForCallee(calleeSymbol->getResolvedMethod());
 
     bool skipHCRGuardCreation = false;
 
     // addGuardForVirtual: create an HCRGuard after the original guard
-    if (!disableHCRGuards && comp()->getHCRMode() != TR::none && guard->_kind != TR_HCRGuard
+    if (!disableHCRGuardsInInliner && !disableHCRGuards && comp()->getHCRMode() != TR::none && guard->_kind != TR_HCRGuard
         && !skipHCRGuardForCallee) {
         createdHCRAndVirtualGuard = true;
         TR_OpaqueClassBlock *methodClass = calleeSymbol->getResolvedMethod()->classOfMethod();
@@ -1736,7 +1737,7 @@ TR::TreeTop *TR_InlinerBase::addGuardForVirtual(TR::ResolvedMethodSymbol *caller
             hcrBlock->getExit()->join(block2->getEntry());
             // printf("Inserting a HCRGuard %p after virtual guard %p in %s\n", hcrBlock, block1, comp()->signature());
         }
-    } else if (!disableHCRGuards && comp()->getHCRMode() != TR::none)
+    } else if (!disableHCRGuardsInInliner && !disableHCRGuards && comp()->getHCRMode() != TR::none)
         createdHCRGuard = true;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -3675,11 +3676,12 @@ DirectCallSiteGuardSelection::DirectCallSiteGuardSelection(TR::Compilation *comp
     , _guard(NULL)
 {
     static const char *disableHCRGuards2 = feGetEnv("TR_DisableHCRGuards");
+    static const char *disableHCRGuardsInInliner2 = feGetEnv("TR_DisableHCRGuardsInInliner2");
 
     const bool skipHCRGuardForCallee = inliner->getPolicy()->skipHCRGuardForCallee(site->_initialCalleeMethod);
 
     static const char *disableFSDGuard = feGetEnv("TR_DisableFSDGuard");
-    if (!disableHCRGuards2 && comp->getHCRMode() != TR::none && !comp->compileRelocatableCode()
+    if (!disableHCRGuardsInInliner2 && !disableHCRGuards2 && comp->getHCRMode() != TR::none && !comp->compileRelocatableCode()
         && !skipHCRGuardForCallee) {
         _receiverClass = site->_initialCalleeMethod->classOfMethod();
         _guard = new (comp->trHeapMemory()) TR_VirtualGuardSelection(TR_HCRGuard, TR_NonoverriddenTest);
