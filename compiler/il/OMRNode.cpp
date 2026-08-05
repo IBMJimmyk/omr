@@ -5097,55 +5097,38 @@ bool OMR::Node::isPreparedForDirectJNI()
 
 void OMR::Node::setPreparedForDirectJNI() { _flags.set(preparedForDirectToJNI, true); }
 
-bool OMR::Node::isSafeForCGToFastPathUnsafeCall()
+bool OMR::Node::isSafeForCGToFastPathCall()
 {
     TR_ASSERT(self()->getOpCode().isCall(), "Opcode must be call");
-    return _flags.testAny(unsafeFastPathCall);
+    return _flags.testAny(safeForCGToFastPathCall);
 }
 
-void OMR::Node::setIsSafeForCGToFastPathUnsafeCall(bool v)
+void OMR::Node::setSafeForCGToFastPathCall(bool v)
 {
     TR_ASSERT(self()->getOpCode().isCall(), "Opcode must be call");
-    _flags.set(unsafeFastPathCall);
+    _flags.set(safeForCGToFastPathCall);
 }
 
-bool OMR::Node::chkSafeForCGToFastPathUnsafeCall()
+bool OMR::Node::chkSafeForCGToFastPathCall()
 {
-    return self()->getOpCode().isCall() && _flags.testAny(unsafeFastPathCall);
+    return self()->getOpCode().isCall() && _flags.testAny(safeForCGToFastPathCall);
 }
 
-bool OMR::Node::isSafeForCGToInlineStringIntrinsic()
-{
-    TR_ASSERT_FATAL(self()->getOpCode().isCall(), "Opcode must be call");
-    return _flags.testAny(inlineStringIntrinsic);
-}
-
-void OMR::Node::setIsSafeForCGToInlineStringIntrinsic(bool v)
+bool OMR::Node::isSkippedInRecognizedCallTransformation()
 {
     TR_ASSERT_FATAL(self()->getOpCode().isCall(), "Opcode must be call");
-    _flags.set(inlineStringIntrinsic);
+    return _flags.testAny(skippedInRecognizedCallTransformation);
 }
 
-bool OMR::Node::chkSafeForCGToInlineStringIntrinsic()
-{
-    return self()->getOpCode().isCall() && _flags.testAny(inlineStringIntrinsic);
-}
-
-bool OMR::Node::checkSkipRecognizedCallTransformation()
+void OMR::Node::setSkippedInRecognizedCallTransformation(bool v)
 {
     TR_ASSERT_FATAL(self()->getOpCode().isCall(), "Opcode must be call");
-    return _flags.testAny(skipRecognizedCallTransformation);
+    _flags.set(skippedInRecognizedCallTransformation);
 }
 
-void OMR::Node::setSkipRecognizedCallTransformation(bool v)
+bool OMR::Node::chkSkippedInRecognizedCallTransformation()
 {
-    TR_ASSERT_FATAL(self()->getOpCode().isCall(), "Opcode must be call");
-    _flags.set(skipRecognizedCallTransformation);
-}
-
-bool OMR::Node::chkSkipRecognizedCallTransformation()
-{
-    return self()->getOpCode().isCall() && _flags.testAny(skipRecognizedCallTransformation);
+    return self()->getOpCode().isCall() && _flags.testAny(skippedInRecognizedCallTransformation);
 }
 
 bool OMR::Node::isCallThatWasRefinedFromKnownObject()

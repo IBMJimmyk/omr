@@ -1242,17 +1242,13 @@ public:
     bool isPreparedForDirectJNI();
     void setPreparedForDirectJNI();
 
-    bool isSafeForCGToFastPathUnsafeCall();
-    void setIsSafeForCGToFastPathUnsafeCall(bool v);
-    bool chkSafeForCGToFastPathUnsafeCall();
+    bool isSafeForCGToFastPathCall();
+    void setSafeForCGToFastPathCall(bool v);
+    bool chkSafeForCGToFastPathCall();
 
-    bool isSafeForCGToInlineStringIntrinsic();
-    void setIsSafeForCGToInlineStringIntrinsic(bool v);
-    bool chkSafeForCGToInlineStringIntrinsic();
-
-    bool checkSkipRecognizedCallTransformation();
-    void setSkipRecognizedCallTransformation(bool v);
-    bool chkSkipRecognizedCallTransformation();
+    bool isSkippedInRecognizedCallTransformation();
+    void setSkippedInRecognizedCallTransformation(bool v);
+    bool chkSkippedInRecognizedCallTransformation();
 
     // Flag used by TR::ladd and TR::lsub or by TR::lshl and TR::lshr for compressedPointers
     bool containsCompressionSequence();
@@ -1954,9 +1950,8 @@ protected:
         nodeIsRecognizedArrayCopyCall = 0x00010000,
         desynchronizeCall = 0x00020000,
         preparedForDirectToJNI = 0x00040000, // TODO: make J9_PROJECT_SPECIFIC
-        unsafeFastPathCall = 0x00080000, // TODO: make J9_PROJECT_SPECIFIC
-        inlineStringIntrinsic = 0x00100000, // TODO: make J9_PROJECT_SPECIFIC
-        skipRecognizedCallTransformation = 0x00200000, // TODO: make J9_PROJECT_SPECIFIC
+        safeForCGToFastPathCall = 0x00080000, // TODO: make J9_PROJECT_SPECIFIC
+        skippedInRecognizedCallTransformation = 0x00100000, // TODO: make J9_PROJECT_SPECIFIC
 
         // Flag used by TR::ladd and TR::lsub or by TR::lshl and TR::lshr for compressedPointers
         isCompressionSequence = 0x00000800,

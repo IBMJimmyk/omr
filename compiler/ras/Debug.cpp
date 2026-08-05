@@ -885,9 +885,8 @@ int32_t TR_Debug::nodePrintAllFlags(OMR::Logger *log, TR::Node *node)
     FLAG(chkNodeCreatedByPRE, "createdByPRE");
     FLAG(chkIsReferenceNonNull, "referenceIsNonNull");
     FLAG(isPreparedForDirectJNI, "preparedForDirectJNI");
-    FLAG(chkSafeForCGToFastPathUnsafeCall, "safeForCGToFastPathUnsafeCall");
-    FLAG(chkSafeForCGToInlineStringIntrinsic, "safeForCGToInlineStringIntrinsic");
-    FLAG(chkSkipRecognizedCallTransformation, "skipRecognizedCallTransformation");
+    FLAG(chkSafeForCGToFastPathCall, "safeForCGToFastPathCall");
+    FLAG(chkSkippedInRecognizedCallTransformation, "skippedInRecognizedCallTransformation");
 
 #undef FLAG
 #undef FLAG_IF
