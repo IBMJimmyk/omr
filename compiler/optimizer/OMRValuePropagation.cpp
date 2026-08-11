@@ -2259,7 +2259,9 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
                 "found.\n",
                 node->getOpCode().getName(), node, getValueNumber(defNode), defNode->getOpCode().getName(), defNode);
 
-            return NULL;
+            if (defValueNumber != getValueNumber(node)) {
+                return NULL;
+            }
         }
 
         // if we haven't seen a def on this iteration along all paths we must consider the backedge constraints
