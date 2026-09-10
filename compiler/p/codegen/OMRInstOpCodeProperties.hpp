@@ -3473,16 +3473,16 @@
         /* .properties  = */ PPCOpProp_IsVSX | PPCOpProp_SyncSideEffectFree,
     },
 
-    /* { */
-    /* .mnemonic    =    OMR::InstOpCode::mtvsrdd, */
-    /* .name        =    "mtvsrdd", */
-    /* .description =    "Move to VSR double Dword", */
-    /* .prefix      =    0x00000000, */
-    /* .opcode      =    0x7C000366, */
-    /* .format      =    FORMAT_UNKNOWN, */
-    /* .minimumALS  =    OMR_PROCESSOR_PPC_P9, */
-    /* .properties  =    PPCOpProp_SyncSideEffectFree, */
-    /* }, */
+    {
+        /* .mnemonic    = */ OMR::InstOpCode::mtvsrdd,
+        /* .name        = */ "mtvsrdd",
+        /* .description =    "Move to VSR double Dword", */
+        /* .prefix      = */ 0x00000000,
+        /* .opcode      = */ 0x7C000366,
+        /* .format      = */ FORMAT_XT_RA_RB,
+        /* .minimumALS  = */ OMR_PROCESSOR_PPC_P9,
+        /* .properties  = */ PPCOpProp_IsVSX | PPCOpProp_SyncSideEffectFree,
+    },
 
     /* { */
     /* .mnemonic    =    OMR::InstOpCode::mtvsrws, */
